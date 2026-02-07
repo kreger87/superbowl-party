@@ -681,22 +681,51 @@
     }
 
     .btn-save-answers {
-      background: var(--green);
-      color: var(--navy);
+      background: var(--silver);
+      color: #555;
       padding: 14px 36px;
       border: none;
       border-radius: 10px;
       font-weight: 800;
       font-size: 1.1rem;
-      cursor: pointer;
+      cursor: not-allowed;
       margin-top: 16px;
+      width: 100%;
+      transition: all 0.2s;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .btn-save-answers.dirty {
+      background: var(--green);
+      color: var(--navy);
+      cursor: pointer;
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    .btn-save-answers.dirty:hover {
+      background: #7cd633;
+      transform: translateY(-1px);
+    }
+
+    .btn-reset-answers {
+      background: transparent;
+      color: var(--silver);
+      border: 2px solid rgba(165, 172, 175, 0.3);
+      padding: 12px 36px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 10px;
       width: 100%;
       transition: all 0.2s;
     }
 
-    .btn-save-answers:hover {
-      background: #7cd633;
-      transform: translateY(-1px);
+    .btn-reset-answers:hover {
+      border-color: var(--red);
+      color: var(--red);
     }
 
     .save-confirm {
@@ -868,7 +897,7 @@
   <!-- TAB 1: Leaderboard -->
   <div class="tab-content active" id="tab-leaderboard">
     <div class="leaderboard-controls">
-      <input type="text" class="search-box" id="searchBox" placeholder="Search by name...">
+      <input type="text" class="search-box" id="searchBox" placeholder="Search by name..." autocomplete="off">
       <button class="btn btn-refresh" id="btnRefresh">Refresh</button>
       <button class="btn btn-tv" id="btnTV">TV Mode</button>
       <span class="refresh-timer" id="refreshTimer">Next refresh in 30s</span>
@@ -889,7 +918,7 @@
   <div class="tab-content" id="tab-admin">
     <div class="admin-gate" id="adminGate">
       <p>Enter the admin password to manage answers</p>
-      <input type="password" class="admin-pw-input" id="adminPwInput" placeholder="Password">
+      <input type="password" class="admin-pw-input" id="adminPwInput" placeholder="Password" autocomplete="new-password">
       <br>
       <button class="btn-unlock" id="btnUnlock">Unlock Admin</button>
       <div class="admin-error" id="adminError"></div>
@@ -910,6 +939,7 @@
       </div>
       <div class="admin-form-grid" id="adminForm"></div>
       <button class="btn-save-answers" id="btnSaveAnswers">Save Answers</button>
+      <button class="btn-reset-answers" id="btnResetAnswers">Reset All Answers</button>
       <div class="save-confirm" id="saveConfirm"></div>
     </div>
   </div>
@@ -1279,7 +1309,7 @@ function renderMyPicks() {
     area.innerHTML = `
       <div class="name-input-section">
         <p>Enter the name you used when submitting your picks:</p>
-        <input type="text" class="name-input" id="myNameInput" placeholder="Your name">
+        <input type="text" class="name-input" id="myNameInput" placeholder="Your name" autocomplete="off">
         <br>
         <button class="btn-save-name" id="btnSetName">View My Picks</button>
       </div>
@@ -1299,7 +1329,7 @@ function renderMyPicks() {
       <div class="name-input-section">
         <p>Could not find picks for "${escapeHtml(savedName)}"</p>
         <p style="font-size:0.85rem; margin-top:8px; color: var(--silver);">Check the name or try again.</p>
-        <input type="text" class="name-input" id="myNameInput" placeholder="Your name" value="${escapeHtml(savedName)}">
+        <input type="text" class="name-input" id="myNameInput" placeholder="Your name" autocomplete="off" value="${escapeHtml(savedName)}">
         <br>
         <button class="btn-save-name" id="btnSetName">Try Again</button>
         <br>
@@ -1414,8 +1444,33 @@ function showAdminPanel() {
   updateAdminStats();
 }
 
+let savedAdminState = {};
+
+function snapshotAdminState() {
+  savedAdminState = {};
+  for (let i = 1; i <= 16; i++) {
+    const key = 'q' + i;
+    savedAdminState[key] = currentAnswers[key] || '';
+  }
+}
+
+function checkAdminDirty() {
+  const btn = document.getElementById('btnSaveAnswers');
+  let dirty = false;
+  for (let i = 1; i <= 16; i++) {
+    const key = 'q' + i;
+    const sel = document.getElementById('admin-' + key);
+    if (sel && sel.value !== (savedAdminState[key] || '')) {
+      dirty = true;
+      break;
+    }
+  }
+  btn.classList.toggle('dirty', dirty);
+}
+
 function buildAdminForm() {
   const form = document.getElementById('adminForm');
+  snapshotAdminState();
   let html = '';
 
   for (let i = 1; i <= 16; i++) {
@@ -1442,6 +1497,13 @@ function buildAdminForm() {
   }
 
   form.innerHTML = html;
+
+  // Listen for changes on all selects
+  form.querySelectorAll('.admin-select').forEach(sel => {
+    sel.addEventListener('change', checkAdminDirty);
+  });
+
+  checkAdminDirty();
 }
 
 function updateAdminStats() {
@@ -1455,11 +1517,11 @@ function updateAdminStats() {
 
 document.getElementById('btnSaveAnswers').addEventListener('click', async () => {
   const btn = document.getElementById('btnSaveAnswers');
-  const confirm = document.getElementById('saveConfirm');
-  btn.disabled = true;
+  const confirmEl = document.getElementById('saveConfirm');
+  btn.classList.remove('dirty');
   btn.textContent = 'Saving...';
-  confirm.className = 'save-confirm';
-  confirm.style.display = 'none';
+  confirmEl.className = 'save-confirm';
+  confirmEl.style.display = 'none';
 
   const updateObj = {};
   for (let i = 1; i <= 16; i++) {
@@ -1476,23 +1538,68 @@ document.getElementById('btnSaveAnswers').addEventListener('click', async () => 
 
     if (error) throw error;
 
-    // Update local state
+    // Update local state and snapshot
     Object.assign(currentAnswers, updateObj);
+    snapshotAdminState();
     leaderboardData = calculateScores(allPicks, currentAnswers);
     updateAdminStats();
 
-    confirm.textContent = 'Answers saved successfully!';
-    confirm.className = 'save-confirm success';
+    confirmEl.textContent = 'Answers saved successfully!';
+    confirmEl.className = 'save-confirm success';
   } catch (err) {
     console.error('Save error:', err);
-    confirm.textContent = 'Error saving answers: ' + (err.message || 'Unknown error');
-    confirm.className = 'save-confirm error';
+    confirmEl.textContent = 'Error saving answers: ' + (err.message || 'Unknown error');
+    confirmEl.className = 'save-confirm error';
+  } finally {
+    btn.textContent = 'Save Answers';
+    checkAdminDirty();
+    setTimeout(() => {
+      confirmEl.style.display = 'none';
+      confirmEl.className = 'save-confirm';
+    }, 4000);
+  }
+});
+
+// Reset all answers
+document.getElementById('btnResetAnswers').addEventListener('click', async () => {
+  if (!window.confirm('Reset ALL answers to unanswered? This will zero out all scores.')) return;
+
+  const btn = document.getElementById('btnResetAnswers');
+  const confirmEl = document.getElementById('saveConfirm');
+  btn.disabled = true;
+  btn.textContent = 'Resetting...';
+
+  const updateObj = {};
+  for (let i = 1; i <= 16; i++) {
+    updateObj['q' + i] = null;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('party_answers')
+      .update(updateObj)
+      .eq('id', 1);
+
+    if (error) throw error;
+
+    Object.assign(currentAnswers, updateObj);
+    snapshotAdminState();
+    leaderboardData = calculateScores(allPicks, currentAnswers);
+    updateAdminStats();
+    buildAdminForm();
+
+    confirmEl.textContent = 'All answers reset!';
+    confirmEl.className = 'save-confirm success';
+  } catch (err) {
+    console.error('Reset error:', err);
+    confirmEl.textContent = 'Error resetting: ' + (err.message || 'Unknown error');
+    confirmEl.className = 'save-confirm error';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Save Answers';
+    btn.textContent = 'Reset All Answers';
     setTimeout(() => {
-      confirm.style.display = 'none';
-      confirm.className = 'save-confirm';
+      confirmEl.style.display = 'none';
+      confirmEl.className = 'save-confirm';
     }, 4000);
   }
 });
