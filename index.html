@@ -563,6 +563,300 @@
       font-size: 0.8rem;
     }
 
+    /* Party Selector */
+    .party-selector {
+      text-align: center;
+      padding: 2.5rem 1rem;
+    }
+
+    .party-selector h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 0.3rem;
+    }
+
+    .party-selector .party-subtitle {
+      color: var(--text-light);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .party-search {
+      width: 100%;
+      padding: 0.85rem 1.1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 0.75rem;
+      background: #fafafa;
+    }
+
+    .party-search:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(105, 190, 40, 0.12);
+      background: #fff;
+    }
+
+    .party-list {
+      list-style: none;
+      max-height: 260px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+    }
+
+    .party-list:empty + .party-or-divider {
+      display: none;
+    }
+
+    .party-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.15s;
+      text-align: left;
+      background: #fff;
+    }
+
+    .party-list li::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    .party-list li:hover {
+      border-color: var(--green);
+      background: rgba(105, 190, 40, 0.04);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(105, 190, 40, 0.1);
+    }
+
+    .party-or-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.75rem 0;
+      color: var(--text-light);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .party-or-divider::before,
+    .party-or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    .party-create-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      padding: 0.85rem 1.8rem;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0, 34, 68, 0.2);
+    }
+
+    .party-create-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(0, 34, 68, 0.3);
+    }
+
+    .party-create-btn:active {
+      transform: translateY(0);
+    }
+
+    .party-create-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .party-error {
+      color: var(--red);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    .party-error.visible {
+      display: block;
+    }
+
+    /* Create Party Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      position: relative;
+      animation: modalSlideIn 0.25s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-box h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 0.4rem;
+    }
+
+    .modal-box p {
+      color: var(--text-light);
+      font-size: 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .modal-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(105, 190, 40, 0.12);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .modal-actions .btn-cancel {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text-light);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .modal-actions .btn-cancel:hover {
+      border-color: var(--silver);
+      color: var(--text);
+    }
+
+    .modal-actions .btn-confirm {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 12px;
+      background: var(--green);
+      color: var(--navy);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .modal-actions .btn-confirm:hover {
+      background: #7cd633;
+    }
+
+    .modal-actions .btn-confirm:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .modal-error {
+      color: var(--red);
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      display: none;
+    }
+
+    .modal-error.visible {
+      display: block;
+    }
+
+    .party-name-display {
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .change-party-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: var(--text-light);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      background: none;
+      border: 2px solid #e5e7eb;
+      border-radius: 50px;
+      padding: 0.4rem 1rem;
+      font-family: inherit;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+
+    .change-party-link:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+    }
+
     /* Responsive tweaks */
     @media (min-width: 480px) {
       .header h1 {
@@ -579,7 +873,7 @@
   <!-- Header -->
   <div class="header">
     <h1>Super Bowl LX Props &#127944;</h1>
-    <p class="subtitle">Seahawks vs Patriots &bull; Feb 8, 2026</p>
+    <p class="subtitle">Seahawks vs Patriots &bull; Feb 8, 2026<span id="header-party-name"></span></p>
     <div class="team-bar">
       <span class="team-badge seahawks">Seahawks</span>
       <span class="vs-text">VS</span>
@@ -589,13 +883,39 @@
 
   <div class="container">
 
+    <!-- Party Selector (shown when no party chosen) -->
+    <div id="party-selector" class="party-selector" style="display:none;">
+      <h2>Join a Party</h2>
+      <p class="party-subtitle">Search for your party or create a new one</p>
+      <input type="text" class="party-search" id="party-search" placeholder="Search parties..." autocomplete="off" />
+      <ul class="party-list" id="party-list"></ul>
+      <div class="party-or-divider">or</div>
+      <button class="party-create-btn" id="party-create-btn">+ Create New Party</button>
+      <div class="party-error" id="party-error"></div>
+    </div>
+
+    <!-- Create Party Modal -->
+    <div class="modal-overlay" id="create-party-modal">
+      <div class="modal-box">
+        <h3>Create a Party</h3>
+        <p>Give your party a name that your guests will recognize.</p>
+        <div class="modal-error" id="modal-error"></div>
+        <input type="text" class="modal-input" id="modal-party-name" placeholder="e.g. The Johnson's Super Bowl Bash" autocomplete="off" />
+        <div class="modal-actions">
+          <button class="btn-cancel" id="modal-cancel">Cancel</button>
+          <button class="btn-confirm" id="modal-confirm">Create Party</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Already submitted message (hidden by default) -->
     <div id="already-submitted" class="already-submitted" style="display:none;">
       <div class="check-icon">&#9989;</div>
       <h2>You already submitted!</h2>
-      <p>Your picks are locked in as <span id="submitted-name" class="name-highlight"></span>.</p>
+      <p>Your picks are locked in as <span id="submitted-name" class="name-highlight"></span> in <span id="submitted-party" class="party-name-display"></span>.</p>
       <a href="leaderboard.html" class="leaderboard-link">View Leaderboard</a>
       <button class="resubmit" id="resubmit-btn">Submit again with a different name</button>
+      <button class="change-party-link" id="change-party-btn">Change Party</button>
     </div>
 
     <!-- Form (hidden when already submitted) -->
@@ -1137,33 +1457,195 @@
     const successMsg = document.getElementById('success-msg');
     const alreadySubmitted = document.getElementById('already-submitted');
     const submittedNameEl = document.getElementById('submitted-name');
+    const submittedPartyEl = document.getElementById('submitted-party');
     const resubmitBtn = document.getElementById('resubmit-btn');
+    const changePartyBtn = document.getElementById('change-party-btn');
+    const partySelector = document.getElementById('party-selector');
+    const partySearchInput = document.getElementById('party-search');
+    const partyList = document.getElementById('party-list');
+    const partyCreateBtn = document.getElementById('party-create-btn');
+    const partyErrorEl = document.getElementById('party-error');
+    const headerPartyName = document.getElementById('header-party-name');
 
     const TOTAL_QUESTIONS = 16;
 
-    // Check localStorage on load
-    (function checkExistingSubmission() {
+    // ============================
+    // PAGE LOAD FLOW
+    // ============================
+    (function init() {
+      const partyId = localStorage.getItem('sbPartyId');
+      const partyDisplayName = localStorage.getItem('sbPartyDisplayName');
       const savedName = localStorage.getItem('sbPartyName');
+
+      if (!partyId) {
+        // No party selected — show party selector
+        partySelector.style.display = 'block';
+        form.style.display = 'none';
+        loadParties();
+        return;
+      }
+
+      // Show party name in header
+      headerPartyName.textContent = ' \u2022 ' + partyDisplayName;
+
       if (savedName) {
+        // Already submitted
         form.style.display = 'none';
         alreadySubmitted.style.display = 'block';
         submittedNameEl.textContent = savedName;
+        submittedPartyEl.textContent = partyDisplayName;
       }
+      // Otherwise: show form (default)
     })();
 
-    // Resubmit handler
+    // ============================
+    // PARTY SELECTOR
+    // ============================
+    let allParties = [];
+
+    async function loadParties() {
+      const { data, error } = await supabaseClient
+        .from('parties')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        console.error('Error loading parties:', error);
+        return;
+      }
+      allParties = data || [];
+      renderPartyList();
+    }
+
+    function renderPartyList() {
+      const search = partySearchInput.value.trim().toLowerCase();
+      const filtered = search
+        ? allParties.filter(p => p.name.toLowerCase().includes(search))
+        : allParties;
+
+      partyList.innerHTML = '';
+      filtered.forEach(function (party) {
+        const li = document.createElement('li');
+        li.textContent = party.name;
+        li.addEventListener('click', function () {
+          selectParty(party.id, party.name);
+        });
+        partyList.appendChild(li);
+      });
+    }
+
+    partySearchInput.addEventListener('input', renderPartyList);
+
+    function selectParty(id, name) {
+      localStorage.setItem('sbPartyId', id);
+      localStorage.setItem('sbPartyDisplayName', name);
+      location.reload();
+    }
+
+    // ============================
+    // CREATE PARTY MODAL
+    // ============================
+    const createModal = document.getElementById('create-party-modal');
+    const modalNameInput = document.getElementById('modal-party-name');
+    const modalConfirmBtn = document.getElementById('modal-confirm');
+    const modalCancelBtn = document.getElementById('modal-cancel');
+    const modalErrorEl = document.getElementById('modal-error');
+
+    partyCreateBtn.addEventListener('click', function () {
+      modalNameInput.value = '';
+      modalErrorEl.classList.remove('visible');
+      createModal.classList.add('show');
+      setTimeout(() => modalNameInput.focus(), 100);
+    });
+
+    modalCancelBtn.addEventListener('click', function () {
+      createModal.classList.remove('show');
+    });
+
+    createModal.addEventListener('click', function (e) {
+      if (e.target === createModal) createModal.classList.remove('show');
+    });
+
+    modalNameInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') doCreateParty();
+    });
+
+    modalConfirmBtn.addEventListener('click', doCreateParty);
+
+    async function doCreateParty() {
+      const name = modalNameInput.value.trim();
+      if (!name) {
+        showModalError('Please enter a party name');
+        modalNameInput.focus();
+        return;
+      }
+
+      hideModalError();
+      modalConfirmBtn.disabled = true;
+      modalConfirmBtn.textContent = 'Creating...';
+
+      try {
+        const { data: partyData, error: partyError } = await supabaseClient
+          .from('parties')
+          .insert({ name: name })
+          .select()
+          .single();
+
+        if (partyError) {
+          if (partyError.code === '23505') {
+            showModalError('A party with that name already exists!');
+            return;
+          }
+          throw partyError;
+        }
+
+        await supabaseClient
+          .from('party_answers')
+          .insert({ party_id: partyData.id });
+
+        selectParty(partyData.id, partyData.name);
+      } catch (err) {
+        console.error('Error creating party:', err);
+        showModalError('Error: ' + (err.message || 'Unknown error'));
+      } finally {
+        modalConfirmBtn.disabled = false;
+        modalConfirmBtn.textContent = 'Create Party';
+      }
+    }
+
+    function showModalError(msg) {
+      modalErrorEl.textContent = msg;
+      modalErrorEl.classList.add('visible');
+    }
+
+    function hideModalError() {
+      modalErrorEl.textContent = '';
+      modalErrorEl.classList.remove('visible');
+    }
+
+    // ============================
+    // CHANGE PARTY / RESUBMIT
+    // ============================
     resubmitBtn.addEventListener('click', function () {
       localStorage.removeItem('sbPartyName');
       location.reload();
     });
 
-    // Grey out opposing team players based on team selection
+    changePartyBtn.addEventListener('click', function () {
+      localStorage.removeItem('sbPartyId');
+      localStorage.removeItem('sbPartyDisplayName');
+      localStorage.removeItem('sbPartyName');
+      location.reload();
+    });
+
+    // ============================
+    // TEAM FILTER (greying out)
+    // ============================
     function applyTeamFilter(triggerName, targetQ, targetName) {
       document.querySelectorAll('input[name="' + triggerName + '"]').forEach(function (radio) {
         radio.addEventListener('change', function () {
           var selectedTeam = this.value;
           var labels = document.querySelectorAll('[data-q="' + targetQ + '"] .option-label[data-team]');
-          // Clear selection if it's now greyed out
           var selected = form.querySelector('input[name="' + targetName + '"]:checked');
           if (selected) {
             var parentLabel = selected.closest('.option-label');
@@ -1184,10 +1666,10 @@
       });
     }
 
-    applyTeamFilter('q4', 'q5', 'q5');   // First Team to Score → First TD Scorer
-    applyTeamFilter('q13', 'q14', 'q14'); // Super Bowl Winner → Super Bowl MVP
+    applyTeamFilter('q4', 'q5', 'q5');
+    applyTeamFilter('q13', 'q14', 'q14');
 
-    // Mark cards as answered when a radio is selected
+    // Mark cards as answered
     document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
       radio.addEventListener('change', function () {
         const card = this.closest('.question-card');
@@ -1196,19 +1678,20 @@
       });
     });
 
-    // Show error
+    // ============================
+    // ERROR / LOADING HELPERS
+    // ============================
     function showError(msg) {
       errorMsg.textContent = msg;
       errorMsg.classList.add('visible');
+      errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // Hide error
     function hideError() {
       errorMsg.textContent = '';
       errorMsg.classList.remove('visible');
     }
 
-    // Set loading state
     function setLoading(loading) {
       submitBtn.disabled = loading;
       if (loading) {
@@ -1220,12 +1703,19 @@
       }
     }
 
-    // Form submit
+    // ============================
+    // FORM SUBMIT
+    // ============================
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
       hideError();
 
-      // Get name
+      const partyId = localStorage.getItem('sbPartyId');
+      if (!partyId) {
+        showError('No party selected. Please reload and select a party.');
+        return;
+      }
+
       const name = nameInput.value.trim();
       if (!name) {
         nameInput.classList.add('error');
@@ -1235,7 +1725,6 @@
       }
       nameInput.classList.remove('error');
 
-      // Validate all questions answered
       let allAnswered = true;
       const answers = {};
 
@@ -1256,7 +1745,6 @@
 
       if (!allAnswered) {
         showError('Please answer all questions before submitting!');
-        // Scroll to first unanswered
         const firstUnanswered = document.querySelector('.question-card.unanswered');
         if (firstUnanswered) {
           firstUnanswered.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1264,38 +1752,33 @@
         return;
       }
 
-      // Submit to Supabase
       setLoading(true);
 
       try {
-        // Check if name already exists
+        // Check if name already exists in this party
         const { data: existing, error: checkError } = await supabaseClient
           .from('party_picks')
           .select('name')
+          .eq('party_id', partyId)
           .eq('name', name)
           .limit(1);
 
-        if (checkError) {
-          throw checkError;
-        }
+        if (checkError) throw checkError;
 
         if (existing && existing.length > 0) {
           setLoading(false);
-          showError('That name is already taken!');
           nameInput.classList.add('error');
-          nameInput.focus();
+          showError('Someone with that name already submitted picks at your party! Try adding a last initial (e.g. "Mike B.")');
           return;
         }
 
-        // Insert the picks
-        const row = { name: name, ...answers };
+        // Insert the picks with party_id
+        const row = { party_id: parseInt(partyId), name: name, ...answers };
         const { error: insertError } = await supabaseClient
           .from('party_picks')
           .insert(row);
 
-        if (insertError) {
-          throw insertError;
-        }
+        if (insertError) throw insertError;
 
         // Success
         localStorage.setItem('sbPartyName', name);

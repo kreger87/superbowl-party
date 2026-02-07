@@ -862,6 +862,294 @@
       .admin-stats { flex-direction: column; gap: 8px; }
     }
 
+    /* Party Selector */
+    .party-gate {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .party-gate h2 {
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 0.3rem;
+    }
+
+    .party-gate .party-subtitle {
+      color: var(--silver);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .party-gate .party-search {
+      width: 100%;
+      padding: 0.85rem 1.1rem;
+      border: 2px solid rgba(105, 190, 40, 0.3);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 0.75rem;
+    }
+
+    .party-gate .party-search::placeholder {
+      color: var(--silver);
+    }
+
+    .party-gate .party-search:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(105, 190, 40, 0.1);
+    }
+
+    .party-gate .party-list {
+      list-style: none;
+      max-height: 260px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+    }
+
+    .party-gate .party-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1rem;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #e0e0e0;
+      transition: all 0.15s;
+      text-align: left;
+    }
+
+    .party-gate .party-list li::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    .party-gate .party-list li:hover {
+      border-color: var(--green);
+      background: rgba(105, 190, 40, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .party-gate .party-or-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.75rem 0;
+      color: var(--silver);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .party-gate .party-or-divider::before,
+    .party-gate .party-or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .party-gate .party-create-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: var(--green);
+      color: var(--navy);
+      border: none;
+      padding: 0.85rem 1.8rem;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(105, 190, 40, 0.3);
+    }
+
+    .party-gate .party-create-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(105, 190, 40, 0.4);
+    }
+
+    .party-gate .party-create-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .party-gate .party-error {
+      color: var(--red);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    .party-gate .party-error.visible {
+      display: block;
+    }
+
+    /* Create Party Modal (leaderboard, dark theme) */
+    .lb-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .lb-modal-overlay.show {
+      display: flex;
+    }
+
+    .lb-modal-box {
+      background: #111827;
+      border: 2px solid rgba(105, 190, 40, 0.3);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      animation: lbModalSlideIn 0.25s ease;
+    }
+
+    @keyframes lbModalSlideIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .lb-modal-box h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+
+    .lb-modal-box p {
+      color: var(--silver);
+      font-size: 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .lb-modal-box .modal-input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .lb-modal-box .modal-input::placeholder {
+      color: var(--silver);
+    }
+
+    .lb-modal-box .modal-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(105, 190, 40, 0.1);
+    }
+
+    .lb-modal-box .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .lb-modal-box .btn-cancel {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--silver);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .lb-modal-box .btn-cancel:hover {
+      border-color: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    .lb-modal-box .btn-confirm {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 12px;
+      background: var(--green);
+      color: var(--navy);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .lb-modal-box .btn-confirm:hover {
+      background: #7cd633;
+    }
+
+    .lb-modal-box .btn-confirm:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .lb-modal-box .modal-error {
+      color: var(--red);
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      display: none;
+    }
+
+    .lb-modal-box .modal-error.visible {
+      display: block;
+    }
+
+    .btn-switch-party {
+      background: transparent;
+      color: var(--silver);
+      border: 1px solid rgba(165, 172, 175, 0.3);
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-switch-party:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -873,9 +1161,36 @@
 
   <div class="header">
     <h1>Super Bowl LX Leaderboard &#127942;</h1>
-    <div class="subtitle">Seahawks vs Patriots &bull; Feb 9, 2026</div>
+    <div class="subtitle">Seahawks vs Patriots &bull; Feb 9, 2026<span id="header-party-name"></span></div>
   </div>
 
+  <!-- Party Gate (shown when no party selected) -->
+  <div id="party-gate" class="party-gate" style="display:none;">
+    <h2>Select a Party</h2>
+    <p class="party-subtitle">Choose your party to view the leaderboard</p>
+    <input type="text" class="party-search" id="lb-party-search" placeholder="Search parties..." autocomplete="off" />
+    <ul class="party-list" id="lb-party-list"></ul>
+    <div class="party-or-divider">or</div>
+    <button class="party-create-btn" id="lb-party-create-btn">+ Create New Party</button>
+    <div class="party-error" id="lb-party-error"></div>
+  </div>
+
+  <!-- Create Party Modal (dark) -->
+  <div class="lb-modal-overlay" id="lb-create-party-modal">
+    <div class="lb-modal-box">
+      <h3>Create a Party</h3>
+      <p>Give your party a name that your guests will recognize.</p>
+      <div class="modal-error" id="lb-modal-error"></div>
+      <input type="text" class="modal-input" id="lb-modal-party-name" placeholder="e.g. The Johnson's Super Bowl Bash" autocomplete="off" />
+      <div class="modal-actions">
+        <button class="btn-cancel" id="lb-modal-cancel">Cancel</button>
+        <button class="btn-confirm" id="lb-modal-confirm">Create Party</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content (hidden until party selected) -->
+  <div id="main-content">
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="leaderboard">Leaderboard</button>
     <button class="tab-btn" data-tab="mypicks">My Picks</button>
@@ -888,6 +1203,7 @@
       <input type="text" class="search-box" id="searchBox" placeholder="Search by name..." autocomplete="off">
       <button class="btn btn-refresh" id="btnRefresh">Refresh</button>
       <button class="btn btn-tv" id="btnTV">TV Mode</button>
+      <button class="btn-switch-party" id="btnSwitchParty">Switch Party</button>
       <span class="refresh-timer" id="refreshTimer">Next refresh in 30s</span>
     </div>
     <div id="leaderboardArea">
@@ -931,6 +1247,8 @@
       <div class="save-confirm" id="saveConfirm"></div>
     </div>
   </div>
+
+  </div><!-- /main-content -->
 
   <!-- Player Detail Modal -->
   <div class="modal-overlay" id="playerModal">
@@ -1031,6 +1349,152 @@ let countdown = 30;
 let tvMode = false;
 
 // ============================================================
+// PARTY GATE
+// ============================================================
+const partyId = localStorage.getItem('sbPartyId');
+const partyDisplayName = localStorage.getItem('sbPartyDisplayName');
+
+(function initPartyGate() {
+  if (!partyId) {
+    document.getElementById('party-gate').style.display = 'block';
+    document.getElementById('main-content').style.display = 'none';
+    loadLbParties();
+    return;
+  }
+
+  // Show party name in header
+  document.getElementById('header-party-name').textContent = ' \u2022 ' + partyDisplayName;
+})();
+
+let lbAllParties = [];
+
+async function loadLbParties() {
+  const { data, error } = await supabaseClient
+    .from('parties')
+    .select('*')
+    .order('name');
+
+  if (error) {
+    console.error('Error loading parties:', error);
+    return;
+  }
+  lbAllParties = data || [];
+  renderLbPartyList();
+}
+
+function renderLbPartyList() {
+  const searchInput = document.getElementById('lb-party-search');
+  const list = document.getElementById('lb-party-list');
+  const search = searchInput.value.trim().toLowerCase();
+  const filtered = search
+    ? lbAllParties.filter(p => p.name.toLowerCase().includes(search))
+    : lbAllParties;
+
+  list.innerHTML = '';
+  filtered.forEach(function (party) {
+    const li = document.createElement('li');
+    li.textContent = party.name;
+    li.addEventListener('click', function () {
+      localStorage.setItem('sbPartyId', party.id);
+      localStorage.setItem('sbPartyDisplayName', party.name);
+      location.reload();
+    });
+    list.appendChild(li);
+  });
+}
+
+document.getElementById('lb-party-search').addEventListener('input', renderLbPartyList);
+
+// Create Party Modal (leaderboard)
+const lbCreateModal = document.getElementById('lb-create-party-modal');
+const lbModalNameInput = document.getElementById('lb-modal-party-name');
+const lbModalConfirmBtn = document.getElementById('lb-modal-confirm');
+const lbModalCancelBtn = document.getElementById('lb-modal-cancel');
+const lbModalErrorEl = document.getElementById('lb-modal-error');
+
+document.getElementById('lb-party-create-btn').addEventListener('click', function () {
+  lbModalNameInput.value = '';
+  lbModalErrorEl.classList.remove('visible');
+  lbCreateModal.classList.add('show');
+  setTimeout(() => lbModalNameInput.focus(), 100);
+});
+
+lbModalCancelBtn.addEventListener('click', function () {
+  lbCreateModal.classList.remove('show');
+});
+
+lbCreateModal.addEventListener('click', function (e) {
+  if (e.target === lbCreateModal) lbCreateModal.classList.remove('show');
+});
+
+lbModalNameInput.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') doLbCreateParty();
+});
+
+lbModalConfirmBtn.addEventListener('click', doLbCreateParty);
+
+async function doLbCreateParty() {
+  const name = lbModalNameInput.value.trim();
+  if (!name) {
+    showLbModalError('Please enter a party name');
+    lbModalNameInput.focus();
+    return;
+  }
+
+  hideLbModalError();
+  lbModalConfirmBtn.disabled = true;
+  lbModalConfirmBtn.textContent = 'Creating...';
+
+  try {
+    const { data: partyData, error: partyError } = await supabaseClient
+      .from('parties')
+      .insert({ name: name })
+      .select()
+      .single();
+
+    if (partyError) {
+      if (partyError.code === '23505') {
+        showLbModalError('A party with that name already exists!');
+        return;
+      }
+      throw partyError;
+    }
+
+    await supabaseClient
+      .from('party_answers')
+      .insert({ party_id: partyData.id });
+
+    localStorage.setItem('sbPartyId', partyData.id);
+    localStorage.setItem('sbPartyDisplayName', partyData.name);
+    location.reload();
+  } catch (err) {
+    console.error('Error creating party:', err);
+    showLbModalError('Error: ' + (err.message || 'Unknown error'));
+  } finally {
+    lbModalConfirmBtn.disabled = false;
+    lbModalConfirmBtn.textContent = 'Create Party';
+  }
+}
+
+function showLbModalError(msg) {
+  lbModalErrorEl.textContent = msg;
+  lbModalErrorEl.classList.add('visible');
+}
+
+function hideLbModalError() {
+  lbModalErrorEl.textContent = '';
+  lbModalErrorEl.classList.remove('visible');
+}
+
+// Switch Party button
+document.getElementById('btnSwitchParty').addEventListener('click', function () {
+  localStorage.removeItem('sbPartyId');
+  localStorage.removeItem('sbPartyDisplayName');
+  localStorage.removeItem('sbPartyName');
+  location.reload();
+});
+
+// ============================================================
 // TABS
 // ============================================================
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1085,13 +1549,15 @@ function calculateScores(picks, answers) {
 }
 
 // ============================================================
-// DATA FETCHING
+// DATA FETCHING (party-scoped)
 // ============================================================
 async function fetchData() {
+  if (!partyId) return;
+
   try {
     const [picksRes, answersRes] = await Promise.all([
-      supabaseClient.from('party_picks').select('*'),
-      supabaseClient.from('party_answers').select('*').eq('id', 1).single()
+      supabaseClient.from('party_picks').select('*').eq('party_id', partyId),
+      supabaseClient.from('party_answers').select('*').eq('party_id', partyId).single()
     ]);
 
     if (picksRes.data) allPicks = picksRes.data;
@@ -1387,7 +1853,7 @@ function saveName() {
 }
 
 // ============================================================
-// ADMIN TAB
+// ADMIN TAB (party-scoped)
 // ============================================================
 const ADMIN_PASSWORD = 'superbowl60';
 
@@ -1510,7 +1976,7 @@ document.getElementById('btnSaveAnswers').addEventListener('click', async () => 
     const { error } = await supabaseClient
       .from('party_answers')
       .update(updateObj)
-      .eq('id', 1);
+      .eq('party_id', partyId);
 
     if (error) throw error;
 
@@ -1554,7 +2020,7 @@ document.getElementById('btnResetAnswers').addEventListener('click', async () =>
     const { error } = await supabaseClient
       .from('party_answers')
       .update(updateObj)
-      .eq('id', 1);
+      .eq('party_id', partyId);
 
     if (error) throw error;
 
@@ -1598,8 +2064,10 @@ function escapeJs(str) {
 // ============================================================
 // INIT
 // ============================================================
-fetchData();
-startRefreshTimer();
+if (partyId) {
+  fetchData();
+  startRefreshTimer();
+}
 </script>
 
 </body>
