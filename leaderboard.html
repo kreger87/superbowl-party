@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Bowl LX Leaderboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --navy: #002244;
+      --green: #69BE28;
+      --red: #C60C30;
+      --silver: #A5ACAF;
+      --dark-bg: #0a0f1a;
+      --card-bg: #ffffff;
+      --text-primary: #1a1a2e;
+      --text-secondary: #555;
+      --gold: #FFD700;
+      --silver-medal: #C0C0C0;
+      --bronze: #CD7F32;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      background: linear-gradient(135deg, var(--navy) 0%, #001428 50%, #0d1f3c 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(90deg, var(--navy), #001a3a);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 4px solid var(--green);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 20px,
+        rgba(105, 190, 40, 0.03) 20px,
+        rgba(105, 190, 40, 0.03) 40px
+      );
+    }
+
+    .header h1 {
+      color: #fff;
+      font-size: 2rem;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .header .subtitle {
+      color: var(--silver);
+      font-size: 0.9rem;
+      margin-top: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      background: rgba(0, 34, 68, 0.95);
+      border-bottom: 2px solid rgba(105, 190, 40, 0.3);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 14px 16px;
+      background: transparent;
+      border: none;
+      color: var(--silver);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(105, 190, 40, 0.1);
+    }
+
+    .tab-btn.active {
+      color: var(--green);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0; right: 0;
+      height: 3px;
+      background: var(--green);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Leaderboard Tab */
+    .leaderboard-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 180px;
+      padding: 10px 14px;
+      border: 2px solid rgba(105, 190, 40, 0.3);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .search-box::placeholder {
+      color: var(--silver);
+    }
+
+    .search-box:focus {
+      border-color: var(--green);
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-refresh {
+      background: var(--green);
+      color: var(--navy);
+    }
+
+    .btn-refresh:hover {
+      background: #7cd633;
+      transform: translateY(-1px);
+    }
+
+    .btn-tv {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-tv:hover {
+      background: #e00e36;
+      transform: translateY(-1px);
+    }
+
+    .btn-tv.active-tv {
+      background: var(--green);
+      color: var(--navy);
+    }
+
+    .refresh-timer {
+      color: var(--silver);
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    /* Leaderboard Table */
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 6px;
+    }
+
+    .leaderboard-table thead th {
+      color: var(--silver);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .leaderboard-table thead th:nth-child(3),
+    .leaderboard-table thead th:nth-child(4) {
+      text-align: center;
+    }
+
+    .leaderboard-row {
+      background: rgba(255,255,255,0.06);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .leaderboard-row:hover {
+      background: rgba(255,255,255,0.12);
+      transform: scale(1.01);
+    }
+
+    .leaderboard-row td {
+      padding: 14px 12px;
+      color: #e0e0e0;
+      font-size: 1rem;
+    }
+
+    .leaderboard-row td:first-child {
+      border-radius: 10px 0 0 10px;
+      width: 60px;
+    }
+
+    .leaderboard-row td:last-child {
+      border-radius: 0 10px 10px 0;
+    }
+
+    .leaderboard-row td:nth-child(3),
+    .leaderboard-row td:nth-child(4) {
+      text-align: center;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .rank-1 {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #4a3000;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+    }
+
+    .rank-2 {
+      background: linear-gradient(135deg, #e0e0e0, #a0a0a0);
+      color: #333;
+      box-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
+    }
+
+    .rank-3 {
+      background: linear-gradient(135deg, #CD7F32, #a0612b);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+    }
+
+    .rank-default {
+      background: rgba(255,255,255,0.08);
+      color: var(--silver);
+    }
+
+    .player-name {
+      font-weight: 600;
+    }
+
+    .score-cell {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--green) !important;
+    }
+
+    .correct-cell {
+      color: var(--silver) !important;
+      font-size: 0.9rem;
+    }
+
+    /* Gold/Silver/Bronze row highlights */
+    .row-gold { background: rgba(255, 215, 0, 0.08) !important; }
+    .row-silver { background: rgba(192, 192, 192, 0.08) !important; }
+    .row-bronze { background: rgba(205, 127, 50, 0.08) !important; }
+
+    /* Player detail modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #111827;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      border: 2px solid rgba(105, 190, 40, 0.3);
+      position: relative;
+    }
+
+    .modal-box h2 {
+      color: #fff;
+      margin-bottom: 4px;
+      font-size: 1.4rem;
+    }
+
+    .modal-box .modal-subtitle {
+      color: var(--green);
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .picks-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .pick-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      align-items: center;
+    }
+
+    .pick-correct {
+      background: rgba(105, 190, 40, 0.15);
+      border-left: 3px solid var(--green);
+    }
+
+    .pick-wrong {
+      background: rgba(198, 12, 48, 0.15);
+      border-left: 3px solid var(--red);
+    }
+
+    .pick-pending {
+      background: rgba(165, 172, 175, 0.1);
+      border-left: 3px solid var(--silver);
+    }
+
+    .pick-row .q-label {
+      color: var(--silver);
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    .pick-row .pick-val {
+      color: #e0e0e0;
+    }
+
+    .pick-row .answer-val {
+      color: #e0e0e0;
+    }
+
+    .pick-row .pts-val {
+      font-weight: 700;
+      text-align: right;
+      min-width: 40px;
+    }
+
+    .pts-earned {
+      color: var(--green);
+    }
+
+    .pts-zero {
+      color: var(--red);
+    }
+
+    .pts-pending {
+      color: var(--silver);
+    }
+
+    /* My Picks Tab */
+    .my-picks-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .my-picks-header h2 {
+      color: #fff;
+      font-size: 1.5rem;
+    }
+
+    .my-picks-header .my-score {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--green);
+      margin: 8px 0;
+    }
+
+    .my-picks-header .my-correct {
+      color: var(--silver);
+      font-size: 0.95rem;
+    }
+
+    .name-input-section {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .name-input-section p {
+      color: var(--silver);
+      margin-bottom: 16px;
+      font-size: 1rem;
+    }
+
+    .name-input {
+      padding: 12px 18px;
+      border: 2px solid rgba(105, 190, 40, 0.4);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 300px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .name-input:focus {
+      border-color: var(--green);
+    }
+
+    .btn-save-name {
+      background: var(--green);
+      color: var(--navy);
+      padding: 12px 28px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-save-name:hover {
+      background: #7cd633;
+    }
+
+    .my-picks-grid {
+      display: grid;
+      gap: 6px;
+    }
+
+    .my-pick-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 60px;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      align-items: center;
+    }
+
+    .my-pick-row.header-row {
+      color: var(--silver);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: transparent !important;
+      border-left: 3px solid transparent !important;
+    }
+
+    .my-pick-row .col-pts {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .change-name-link {
+      color: var(--silver);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .change-name-link:hover {
+      color: #fff;
+    }
+
+    /* Admin Tab */
+    .admin-gate {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .admin-gate p {
+      color: var(--silver);
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+
+    .admin-pw-input {
+      padding: 12px 18px;
+      border: 2px solid rgba(198, 12, 48, 0.4);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 300px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .admin-pw-input:focus {
+      border-color: var(--red);
+    }
+
+    .btn-unlock {
+      background: var(--red);
+      color: #fff;
+      padding: 12px 28px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-unlock:hover {
+      background: #e00e36;
+    }
+
+    .admin-error {
+      color: var(--red);
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    .admin-panel {
+      display: none;
+    }
+
+    .admin-panel.show {
+      display: block;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .admin-header h2 {
+      color: #fff;
+      font-size: 1.4rem;
+    }
+
+    .admin-stats {
+      display: flex;
+      gap: 16px;
+    }
+
+    .admin-stat {
+      background: rgba(255,255,255,0.06);
+      padding: 10px 16px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .admin-stat .stat-val {
+      color: var(--green);
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .admin-stat .stat-label {
+      color: var(--silver);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .admin-q-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      background: rgba(255,255,255,0.04);
+      padding: 14px;
+      border-radius: 10px;
+      align-items: center;
+    }
+
+    .admin-q-label {
+      color: #e0e0e0;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .admin-q-label span {
+      color: var(--silver);
+      font-size: 0.8rem;
+      font-weight: 400;
+    }
+
+    .admin-select {
+      padding: 10px 12px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 0.95rem;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A5ACAF' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    .admin-select:focus {
+      border-color: var(--green);
+    }
+
+    .admin-select option {
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    .btn-save-answers {
+      background: var(--green);
+      color: var(--navy);
+      padding: 14px 36px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 16px;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .btn-save-answers:hover {
+      background: #7cd633;
+      transform: translateY(-1px);
+    }
+
+    .save-confirm {
+      text-align: center;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .save-confirm.success {
+      display: block;
+      background: rgba(105, 190, 40, 0.15);
+      color: var(--green);
+    }
+
+    .save-confirm.error {
+      display: block;
+      background: rgba(198, 12, 48, 0.15);
+      color: var(--red);
+    }
+
+    /* TV Mode */
+    body.tv-mode {
+      background: #000;
+    }
+
+    body.tv-mode .header {
+      padding: 30px;
+      border-bottom-width: 6px;
+    }
+
+    body.tv-mode .header h1 {
+      font-size: 3.5rem;
+    }
+
+    body.tv-mode .tab-bar {
+      display: none;
+    }
+
+    body.tv-mode .tab-content {
+      max-width: 100%;
+      padding: 30px 40px;
+    }
+
+    body.tv-mode .search-box {
+      display: none;
+    }
+
+    body.tv-mode .leaderboard-controls {
+      justify-content: center;
+    }
+
+    body.tv-mode .leaderboard-table thead th {
+      font-size: 1.2rem;
+      padding: 14px 20px;
+    }
+
+    body.tv-mode .leaderboard-row td {
+      padding: 22px 20px;
+      font-size: 1.6rem;
+    }
+
+    body.tv-mode .rank-badge {
+      width: 56px;
+      height: 56px;
+      font-size: 1.4rem;
+    }
+
+    body.tv-mode .score-cell {
+      font-size: 2rem;
+    }
+
+    body.tv-mode .refresh-timer {
+      font-size: 1.1rem;
+    }
+
+    body.tv-mode .btn {
+      font-size: 1.1rem;
+      padding: 14px 24px;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    body.tv-mode .leaderboard-row {
+      animation: slideIn 0.4s ease-out both;
+    }
+
+    body.tv-mode .leaderboard-row:nth-child(1) { animation-delay: 0.05s; }
+    body.tv-mode .leaderboard-row:nth-child(2) { animation-delay: 0.1s; }
+    body.tv-mode .leaderboard-row:nth-child(3) { animation-delay: 0.15s; }
+    body.tv-mode .leaderboard-row:nth-child(4) { animation-delay: 0.2s; }
+    body.tv-mode .leaderboard-row:nth-child(5) { animation-delay: 0.25s; }
+    body.tv-mode .leaderboard-row:nth-child(6) { animation-delay: 0.3s; }
+    body.tv-mode .leaderboard-row:nth-child(7) { animation-delay: 0.35s; }
+    body.tv-mode .leaderboard-row:nth-child(8) { animation-delay: 0.4s; }
+    body.tv-mode .leaderboard-row:nth-child(9) { animation-delay: 0.45s; }
+    body.tv-mode .leaderboard-row:nth-child(10) { animation-delay: 0.5s; }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      color: var(--silver);
+      padding: 40px;
+      font-size: 1rem;
+    }
+
+    .loading .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(105, 190, 40, 0.2);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .no-data {
+      text-align: center;
+      color: var(--silver);
+      padding: 40px;
+      font-size: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .header h1 { font-size: 1.4rem; }
+      .tab-btn { font-size: 0.85rem; padding: 12px 8px; }
+      .tab-content { padding: 14px; }
+      .leaderboard-row td { padding: 10px 8px; font-size: 0.9rem; }
+      .rank-badge { width: 30px; height: 30px; font-size: 0.75rem; }
+      .pick-row { grid-template-columns: 1fr 1fr; gap: 4px; }
+      .pick-row .answer-val { display: none; }
+      .my-pick-row { grid-template-columns: 1fr 0.8fr 0.8fr 50px; font-size: 0.8rem; }
+      .admin-q-row { grid-template-columns: 1fr; }
+      .modal-box { padding: 16px; }
+      .admin-stats { flex-direction: column; gap: 8px; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(105, 190, 40, 0.3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(105, 190, 40, 0.5); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Super Bowl LX Leaderboard &#127942;</h1>
+    <div class="subtitle">Seahawks vs Patriots &bull; Feb 9, 2026</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="leaderboard">Leaderboard</button>
+    <button class="tab-btn" data-tab="mypicks">My Picks</button>
+    <button class="tab-btn" data-tab="admin">Admin</button>
+  </div>
+
+  <!-- TAB 1: Leaderboard -->
+  <div class="tab-content active" id="tab-leaderboard">
+    <div class="leaderboard-controls">
+      <input type="text" class="search-box" id="searchBox" placeholder="Search by name...">
+      <button class="btn btn-refresh" id="btnRefresh">Refresh</button>
+      <button class="btn btn-tv" id="btnTV">TV Mode</button>
+      <span class="refresh-timer" id="refreshTimer">Next refresh in 30s</span>
+    </div>
+    <div id="leaderboardArea">
+      <div class="loading"><div class="spinner"></div><br>Loading leaderboard...</div>
+    </div>
+  </div>
+
+  <!-- TAB 2: My Picks -->
+  <div class="tab-content" id="tab-mypicks">
+    <div id="myPicksArea">
+      <div class="loading"><div class="spinner"></div><br>Loading your picks...</div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Admin -->
+  <div class="tab-content" id="tab-admin">
+    <div class="admin-gate" id="adminGate">
+      <p>Enter the admin password to manage answers</p>
+      <input type="password" class="admin-pw-input" id="adminPwInput" placeholder="Password">
+      <br>
+      <button class="btn-unlock" id="btnUnlock">Unlock Admin</button>
+      <div class="admin-error" id="adminError"></div>
+    </div>
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-header">
+        <h2>Set Correct Answers</h2>
+        <div class="admin-stats">
+          <div class="admin-stat">
+            <div class="stat-val" id="statAnswered">0/16</div>
+            <div class="stat-label">Answered</div>
+          </div>
+          <div class="admin-stat">
+            <div class="stat-val" id="statSubmissions">0</div>
+            <div class="stat-label">Submissions</div>
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-grid" id="adminForm"></div>
+      <button class="btn-save-answers" id="btnSaveAnswers">Save Answers</button>
+      <div class="save-confirm" id="saveConfirm"></div>
+    </div>
+  </div>
+
+  <!-- Player Detail Modal -->
+  <div class="modal-overlay" id="playerModal">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <h2 id="modalPlayerName"></h2>
+      <div class="modal-subtitle" id="modalPlayerScore"></div>
+      <div class="picks-grid" id="modalPicksGrid"></div>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const SUPABASE_URL = 'https://qwyphndhccvisrhkufvz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_247YYeO-v6NH4_8B8WC8bA_0hfFrr9O';
+
+// ============================================================
+// POINT VALUES
+// ============================================================
+const POINT_VALUES = {
+  q1: { "Heads": 1, "Tails": 1 },
+  q2: { "Over 2 min": 2, "Under 2 min": 2 },
+  q3: { "Beer": 2, "Tech": 2, "Food": 3, "Movie Trailer": 3, "Other": 5 },
+  q4: { "Seahawks": 2, "Patriots": 3 },
+  q5: { "Kenneth Walker III": 3, "Jaxon Smith-Njigba": 3, "Rhamondre Stevenson": 5, "Hunter Henry": 7, "Stefon Diggs": 7, "Other": 10 },
+  q6: { "Over 22.5": 2, "Under 22.5": 2 },
+  q7: { "Titi Me Pregunto": 2, "DtMF": 3, "Baile Inolvidable": 5, "Monaco": 5, "Other": 7 },
+  q8: { "Cardi B": 1, "Rosalia": 5, "Karol G": 5, "No Guest": 7, "Other": 10 },
+  q9: { "Sam Darnold": 2, "Drake Maye": 3 },
+  q10: { "Yes": 5, "No": 1 },
+  q11: { "Over 45.5": 2, "Under 45.5": 2 },
+  q12: { "Under 49.5 yds": 2, "Over 49.5 yds": 3 },
+  q13: { "Seahawks": 2, "Patriots": 3 },
+  q14: { "Sam Darnold": 2, "Drake Maye": 3, "Kenneth Walker III": 5, "Jaxon Smith-Njigba": 5, "Other": 7 },
+  q15: { "Orange": 2, "Yellow/Green": 3, "Blue": 3, "Purple": 5, "Red/Pink": 7, "None/Clear": 7 },
+  q16: { "Kenneth Walker III": 1, "Jaxon Smith-Njigba": 2, "Rhamondre Stevenson": 2, "Hunter Henry": 3, "AJ Barner": 3, "Stefon Diggs": 3, "Cooper Kupp": 3, "Drake Maye": 3, "Kayshon Boutte": 4, "Rashid Shaheed": 4, "Sam Darnold": 7, "Other": 10 }
+};
+
+// ============================================================
+// QUESTION LABELS
+// ============================================================
+const QUESTIONS = {
+  q1: "Coin Toss",
+  q2: "National Anthem Length",
+  q3: "First Commercial",
+  q4: "First Team to Score",
+  q5: "First TD Scorer",
+  q6: "First Half Total Points",
+  q7: "Bad Bunny's First Song",
+  q8: "Halftime Guest",
+  q9: "QB with More Yards",
+  q10: "Defensive/ST TD?",
+  q11: "Total Game Points",
+  q12: "Longest Field Goal",
+  q13: "Super Bowl Winner",
+  q14: "Super Bowl MVP",
+  q15: "Gatorade Color",
+  q16: "Anytime TD Scorer"
+};
+
+// ============================================================
+// ADMIN OPTIONS (must match form exactly)
+// ============================================================
+const OPTIONS = {
+  q1: ["Heads", "Tails"],
+  q2: ["Over 2 min", "Under 2 min"],
+  q3: ["Beer", "Tech", "Food", "Movie Trailer", "Other"],
+  q4: ["Seahawks", "Patriots"],
+  q5: ["Kenneth Walker III", "Jaxon Smith-Njigba", "Rhamondre Stevenson", "Hunter Henry", "Stefon Diggs", "Other"],
+  q6: ["Over 22.5", "Under 22.5"],
+  q7: ["Titi Me Pregunto", "DtMF", "Baile Inolvidable", "Monaco", "Other"],
+  q8: ["Cardi B", "Rosalia", "Karol G", "No Guest", "Other"],
+  q9: ["Sam Darnold", "Drake Maye"],
+  q10: ["Yes", "No"],
+  q11: ["Over 45.5", "Under 45.5"],
+  q12: ["Under 49.5 yds", "Over 49.5 yds"],
+  q13: ["Seahawks", "Patriots"],
+  q14: ["Sam Darnold", "Drake Maye", "Kenneth Walker III", "Jaxon Smith-Njigba", "Other"],
+  q15: ["Orange", "Yellow/Green", "Blue", "Purple", "Red/Pink", "None/Clear"],
+  q16: ["Kenneth Walker III", "Jaxon Smith-Njigba", "Rhamondre Stevenson", "Hunter Henry", "AJ Barner", "Stefon Diggs", "Cooper Kupp", "Drake Maye", "Kayshon Boutte", "Rashid Shaheed", "Sam Darnold", "Other"]
+};
+
+// ============================================================
+// INIT SUPABASE
+// ============================================================
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+// STATE
+// ============================================================
+let allPicks = [];
+let currentAnswers = {};
+let leaderboardData = [];
+let refreshInterval = null;
+let countdown = 30;
+let tvMode = false;
+
+// ============================================================
+// TABS
+// ============================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (tvMode) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+
+    if (btn.dataset.tab === 'mypicks') renderMyPicks();
+    if (btn.dataset.tab === 'admin') checkAdminAuth();
+  });
+});
+
+// ============================================================
+// SCORING LOGIC
+// ============================================================
+function calculateScores(picks, answers) {
+  const results = picks.map(p => {
+    let score = 0;
+    let correct = 0;
+    let total = 0;
+
+    for (let i = 1; i <= 16; i++) {
+      const key = 'q' + i;
+      if (answers[key] && answers[key] !== '') {
+        total++;
+        if (p[key] && p[key] === answers[key]) {
+          correct++;
+          const pts = POINT_VALUES[key] && POINT_VALUES[key][p[key]];
+          if (pts) score += pts;
+        }
+      }
+    }
+
+    return {
+      name: p.name,
+      score,
+      correct,
+      total,
+      picks: p
+    };
+  });
+
+  results.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return b.correct - a.correct;
+  });
+
+  return results;
+}
+
+// ============================================================
+// DATA FETCHING
+// ============================================================
+async function fetchData() {
+  try {
+    const [picksRes, answersRes] = await Promise.all([
+      supabaseClient.from('party_picks').select('*'),
+      supabaseClient.from('party_answers').select('*').eq('id', 1).single()
+    ]);
+
+    if (picksRes.data) allPicks = picksRes.data;
+    if (answersRes.data) currentAnswers = answersRes.data;
+
+    leaderboardData = calculateScores(allPicks, currentAnswers);
+    renderLeaderboard();
+  } catch (err) {
+    console.error('Fetch error:', err);
+  }
+}
+
+// ============================================================
+// LEADERBOARD RENDERING
+// ============================================================
+function renderLeaderboard() {
+  const area = document.getElementById('leaderboardArea');
+  const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
+
+  let data = leaderboardData;
+  if (searchTerm) {
+    data = data.filter(d => d.name.toLowerCase().includes(searchTerm));
+  }
+  if (tvMode) {
+    data = data.slice(0, 10);
+  }
+
+  if (data.length === 0) {
+    area.innerHTML = '<div class="no-data">No players found</div>';
+    return;
+  }
+
+  // Assign ranks based on full leaderboard (not filtered)
+  const rankMap = new Map();
+  let currentRank = 0;
+  let lastScore = -1;
+  let lastCorrect = -1;
+  leaderboardData.forEach((d, i) => {
+    if (d.score !== lastScore || d.correct !== lastCorrect) {
+      currentRank = i + 1;
+    }
+    lastScore = d.score;
+    lastCorrect = d.correct;
+    rankMap.set(d.name, currentRank);
+  });
+
+  let html = `
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Score</th>
+          <th>Correct</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  data.forEach(d => {
+    const rank = rankMap.get(d.name) || '-';
+    let rankClass = 'rank-default';
+    let rowClass = '';
+    if (rank === 1) { rankClass = 'rank-1'; rowClass = 'row-gold'; }
+    else if (rank === 2) { rankClass = 'rank-2'; rowClass = 'row-silver'; }
+    else if (rank === 3) { rankClass = 'rank-3'; rowClass = 'row-bronze'; }
+
+    html += `
+      <tr class="leaderboard-row ${rowClass}" data-name="${escapeHtml(d.name)}" onclick="showPlayerDetail('${escapeJs(d.name)}')">
+        <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+        <td class="player-name">${escapeHtml(d.name)}</td>
+        <td class="score-cell">${d.score}</td>
+        <td class="correct-cell">${d.correct}/${d.total > 0 ? d.total : 16}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  area.innerHTML = html;
+}
+
+// ============================================================
+// PLAYER DETAIL MODAL
+// ============================================================
+function showPlayerDetail(name) {
+  const player = leaderboardData.find(d => d.name === name);
+  if (!player) return;
+
+  document.getElementById('modalPlayerName').textContent = player.name;
+  document.getElementById('modalPlayerScore').textContent = `${player.score} pts | ${player.correct} correct`;
+
+  const grid = document.getElementById('modalPicksGrid');
+  let html = '';
+
+  for (let i = 1; i <= 16; i++) {
+    const key = 'q' + i;
+    const pick = player.picks[key] || '(no pick)';
+    const answer = currentAnswers[key] || '';
+    const label = QUESTIONS[key];
+
+    let rowClass = 'pick-pending';
+    let ptsText = '--';
+    let ptsClass = 'pts-pending';
+
+    if (answer) {
+      if (pick === answer) {
+        rowClass = 'pick-correct';
+        const pts = POINT_VALUES[key] && POINT_VALUES[key][pick] ? POINT_VALUES[key][pick] : 0;
+        ptsText = '+' + pts;
+        ptsClass = 'pts-earned';
+      } else {
+        rowClass = 'pick-wrong';
+        ptsText = '0';
+        ptsClass = 'pts-zero';
+      }
+    }
+
+    html += `
+      <div class="pick-row ${rowClass}">
+        <div class="q-label">${label}</div>
+        <div class="pick-val">${escapeHtml(pick)}</div>
+        <div class="answer-val">${answer ? escapeHtml(answer) : '(pending)'}</div>
+        <div class="pts-val ${ptsClass}">${ptsText}</div>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
+  document.getElementById('playerModal').classList.add('show');
+}
+
+document.getElementById('modalClose').addEventListener('click', () => {
+  document.getElementById('playerModal').classList.remove('show');
+});
+
+document.getElementById('playerModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('playerModal')) {
+    document.getElementById('playerModal').classList.remove('show');
+  }
+});
+
+// ============================================================
+// SEARCH
+// ============================================================
+document.getElementById('searchBox').addEventListener('input', () => {
+  renderLeaderboard();
+});
+
+// ============================================================
+// AUTO REFRESH
+// ============================================================
+function startRefreshTimer() {
+  countdown = 30;
+  updateTimerDisplay();
+  clearInterval(refreshInterval);
+  refreshInterval = setInterval(() => {
+    countdown--;
+    updateTimerDisplay();
+    if (countdown <= 0) {
+      fetchData();
+      countdown = 30;
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  document.getElementById('refreshTimer').textContent = `Next refresh in ${countdown}s`;
+}
+
+document.getElementById('btnRefresh').addEventListener('click', () => {
+  fetchData();
+  countdown = 30;
+});
+
+// ============================================================
+// TV MODE
+// ============================================================
+document.getElementById('btnTV').addEventListener('click', () => {
+  tvMode = !tvMode;
+  document.body.classList.toggle('tv-mode', tvMode);
+  document.getElementById('btnTV').classList.toggle('active-tv', tvMode);
+  document.getElementById('btnTV').textContent = tvMode ? 'Exit TV' : 'TV Mode';
+
+  if (tvMode) {
+    // Force leaderboard tab active
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector('[data-tab="leaderboard"]').classList.add('active');
+    document.getElementById('tab-leaderboard').classList.add('active');
+  }
+
+  renderLeaderboard();
+});
+
+// ============================================================
+// MY PICKS TAB
+// ============================================================
+function renderMyPicks() {
+  const area = document.getElementById('myPicksArea');
+  const savedName = localStorage.getItem('sbPartyName');
+
+  if (!savedName) {
+    area.innerHTML = `
+      <div class="name-input-section">
+        <p>Enter the name you used when submitting your picks:</p>
+        <input type="text" class="name-input" id="myNameInput" placeholder="Your name">
+        <br>
+        <button class="btn-save-name" id="btnSetName">View My Picks</button>
+      </div>
+    `;
+    document.getElementById('btnSetName').addEventListener('click', saveName);
+    document.getElementById('myNameInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveName();
+    });
+    return;
+  }
+
+  // Find this player
+  const player = leaderboardData.find(d => d.name.toLowerCase() === savedName.toLowerCase());
+
+  if (!player) {
+    area.innerHTML = `
+      <div class="name-input-section">
+        <p>Could not find picks for "${escapeHtml(savedName)}"</p>
+        <p style="font-size:0.85rem; margin-top:8px; color: var(--silver);">Check the name or try again.</p>
+        <input type="text" class="name-input" id="myNameInput" placeholder="Your name" value="${escapeHtml(savedName)}">
+        <br>
+        <button class="btn-save-name" id="btnSetName">Try Again</button>
+        <br>
+        <span class="change-name-link" id="clearName">Clear saved name</span>
+      </div>
+    `;
+    document.getElementById('btnSetName').addEventListener('click', saveName);
+    document.getElementById('myNameInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveName();
+    });
+    document.getElementById('clearName').addEventListener('click', () => {
+      localStorage.removeItem('sbPartyName');
+      renderMyPicks();
+    });
+    return;
+  }
+
+  let html = `
+    <div class="my-picks-header">
+      <h2>${escapeHtml(player.name)}</h2>
+      <div class="my-score">${player.score} pts</div>
+      <div class="my-correct">${player.correct} correct out of ${player.total > 0 ? player.total : 16} answered</div>
+      <span class="change-name-link" id="changeName">Change name</span>
+    </div>
+    <div class="my-picks-grid">
+      <div class="my-pick-row header-row pick-pending" style="border-left-color: transparent;">
+        <div>Question</div>
+        <div>Your Pick</div>
+        <div>Correct</div>
+        <div class="col-pts">Pts</div>
+      </div>
+  `;
+
+  for (let i = 1; i <= 16; i++) {
+    const key = 'q' + i;
+    const pick = player.picks[key] || '(no pick)';
+    const answer = currentAnswers[key] || '';
+    const label = QUESTIONS[key];
+
+    let rowClass = 'pick-pending';
+    let ptsText = '--';
+
+    if (answer) {
+      if (pick === answer) {
+        rowClass = 'pick-correct';
+        const pts = POINT_VALUES[key] && POINT_VALUES[key][pick] ? POINT_VALUES[key][pick] : 0;
+        ptsText = '+' + pts;
+      } else {
+        rowClass = 'pick-wrong';
+        ptsText = '0';
+      }
+    }
+
+    html += `
+      <div class="my-pick-row ${rowClass}">
+        <div style="font-weight:600; color: var(--silver);">${label}</div>
+        <div style="color:#e0e0e0;">${escapeHtml(pick)}</div>
+        <div style="color:#e0e0e0;">${answer ? escapeHtml(answer) : '(pending)'}</div>
+        <div class="col-pts" style="color: ${answer ? (pick === answer ? 'var(--green)' : 'var(--red)') : 'var(--silver)'};">${ptsText}</div>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  area.innerHTML = html;
+
+  document.getElementById('changeName').addEventListener('click', () => {
+    localStorage.removeItem('sbPartyName');
+    renderMyPicks();
+  });
+}
+
+function saveName() {
+  const input = document.getElementById('myNameInput');
+  const name = input.value.trim();
+  if (!name) return;
+  localStorage.setItem('sbPartyName', name);
+  renderMyPicks();
+}
+
+// ============================================================
+// ADMIN TAB
+// ============================================================
+const ADMIN_PASSWORD = 'superbowl60';
+
+function checkAdminAuth() {
+  const unlocked = sessionStorage.getItem('sbAdminUnlocked');
+  if (unlocked === 'true') {
+    showAdminPanel();
+  }
+}
+
+document.getElementById('btnUnlock').addEventListener('click', attemptUnlock);
+document.getElementById('adminPwInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') attemptUnlock();
+});
+
+function attemptUnlock() {
+  const pw = document.getElementById('adminPwInput').value;
+  if (pw === ADMIN_PASSWORD) {
+    sessionStorage.setItem('sbAdminUnlocked', 'true');
+    showAdminPanel();
+  } else {
+    document.getElementById('adminError').textContent = 'Incorrect password';
+  }
+}
+
+function showAdminPanel() {
+  document.getElementById('adminGate').style.display = 'none';
+  document.getElementById('adminPanel').classList.add('show');
+  buildAdminForm();
+  updateAdminStats();
+}
+
+function buildAdminForm() {
+  const form = document.getElementById('adminForm');
+  let html = '';
+
+  for (let i = 1; i <= 16; i++) {
+    const key = 'q' + i;
+    const label = QUESTIONS[key];
+    const opts = OPTIONS[key];
+    const currentVal = currentAnswers[key] || '';
+
+    html += `
+      <div class="admin-q-row">
+        <div class="admin-q-label">
+          Q${i}: ${label}
+          <br><span>${opts.map(o => {
+            const pts = POINT_VALUES[key][o];
+            return o + ' (' + pts + 'pt' + (pts > 1 ? 's' : '') + ')';
+          }).join(', ')}</span>
+        </div>
+        <select class="admin-select" id="admin-${key}" data-key="${key}">
+          <option value="">(Not yet)</option>
+          ${opts.map(o => `<option value="${escapeHtml(o)}" ${currentVal === o ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('')}
+        </select>
+      </div>
+    `;
+  }
+
+  form.innerHTML = html;
+}
+
+function updateAdminStats() {
+  let answered = 0;
+  for (let i = 1; i <= 16; i++) {
+    if (currentAnswers['q' + i] && currentAnswers['q' + i] !== '') answered++;
+  }
+  document.getElementById('statAnswered').textContent = `${answered}/16`;
+  document.getElementById('statSubmissions').textContent = allPicks.length;
+}
+
+document.getElementById('btnSaveAnswers').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSaveAnswers');
+  const confirm = document.getElementById('saveConfirm');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  confirm.className = 'save-confirm';
+  confirm.style.display = 'none';
+
+  const updateObj = {};
+  for (let i = 1; i <= 16; i++) {
+    const key = 'q' + i;
+    const sel = document.getElementById('admin-' + key);
+    updateObj[key] = sel.value || null;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('party_answers')
+      .update(updateObj)
+      .eq('id', 1);
+
+    if (error) throw error;
+
+    // Update local state
+    Object.assign(currentAnswers, updateObj);
+    leaderboardData = calculateScores(allPicks, currentAnswers);
+    updateAdminStats();
+
+    confirm.textContent = 'Answers saved successfully!';
+    confirm.className = 'save-confirm success';
+  } catch (err) {
+    console.error('Save error:', err);
+    confirm.textContent = 'Error saving answers: ' + (err.message || 'Unknown error');
+    confirm.className = 'save-confirm error';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Answers';
+    setTimeout(() => {
+      confirm.style.display = 'none';
+      confirm.className = 'save-confirm';
+    }, 4000);
+  }
+});
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escapeJs(str) {
+  if (!str) return '';
+  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+fetchData();
+startRefreshTimer();
+</script>
+
+</body>
+</html>
