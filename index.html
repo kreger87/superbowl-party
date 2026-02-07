@@ -315,6 +315,15 @@
       flex: 1;
     }
 
+    .question-card .q-subtitle {
+      color: var(--text-light);
+      font-size: 0.82rem;
+      font-weight: 400;
+      font-style: italic;
+      margin-bottom: 0.6rem;
+      padding-left: 2.35rem;
+    }
+
     /* Radio options */
     .options-grid {
       display: grid;
@@ -376,6 +385,11 @@
     .option-label:has(input:checked) {
       border-color: var(--green);
       background: rgba(105, 190, 40, 0.06);
+    }
+
+    .option-label.greyed-out {
+      opacity: 0.35;
+      pointer-events: none;
     }
 
     .option-text {
@@ -700,28 +714,29 @@
           <span class="q-number">5</span>
           <span class="q-title-text">First Touchdown Scorer</span>
         </div>
+        <div class="q-subtitle">QB passing touchdowns do not count</div>
         <div class="options-grid">
-          <label class="option-label">
+          <label class="option-label" data-team="Seahawks">
             <input type="radio" name="q5" value="Kenneth Walker III" />
             <span class="option-text">Kenneth Walker III</span>
             <span class="pts-badge mid">3 pts</span>
           </label>
-          <label class="option-label">
+          <label class="option-label" data-team="Seahawks">
             <input type="radio" name="q5" value="Jaxon Smith-Njigba" />
             <span class="option-text">Jaxon Smith-Njigba</span>
             <span class="pts-badge mid">3 pts</span>
           </label>
-          <label class="option-label">
+          <label class="option-label" data-team="Patriots">
             <input type="radio" name="q5" value="Rhamondre Stevenson" />
             <span class="option-text">Rhamondre Stevenson</span>
             <span class="pts-badge high">5 pts</span>
           </label>
-          <label class="option-label">
+          <label class="option-label" data-team="Patriots">
             <input type="radio" name="q5" value="Hunter Henry" />
             <span class="option-text">Hunter Henry</span>
             <span class="pts-badge high">7 pts</span>
           </label>
-          <label class="option-label">
+          <label class="option-label" data-team="Patriots">
             <input type="radio" name="q5" value="Stefon Diggs" />
             <span class="option-text">Stefon Diggs</span>
             <span class="pts-badge high">7 pts</span>
@@ -834,7 +849,7 @@
       <div class="question-card" data-q="q9">
         <div class="q-title">
           <span class="q-number">9</span>
-          <span class="q-title-text">Which QB Throws More Yards?</span>
+          <span class="q-title-text">Which QB Throws For More Yards?</span>
         </div>
         <div class="options-grid two-col">
           <label class="option-label">
@@ -1017,6 +1032,7 @@
           <span class="q-number">16</span>
           <span class="q-title-text">Pick ONE Anytime TD Scorer</span>
         </div>
+        <div class="q-subtitle">QB passing touchdowns do not count</div>
         <div class="options-grid">
           <label class="option-label">
             <input type="radio" name="q16" value="Kenneth Walker III" />
@@ -1139,6 +1155,31 @@
     resubmitBtn.addEventListener('click', function () {
       localStorage.removeItem('sbPartyName');
       location.reload();
+    });
+
+    // Grey out opposing team players in Q5 based on Q4 selection
+    document.querySelectorAll('input[name="q4"]').forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        var selectedTeam = this.value;
+        var q5Labels = document.querySelectorAll('[data-q="q5"] .option-label[data-team]');
+        // Clear any existing Q5 selection if it's now greyed out
+        var q5Selected = form.querySelector('input[name="q5"]:checked');
+        if (q5Selected) {
+          var parentLabel = q5Selected.closest('.option-label');
+          if (parentLabel.dataset.team && parentLabel.dataset.team !== selectedTeam) {
+            q5Selected.checked = false;
+            var card = parentLabel.closest('.question-card');
+            card.classList.remove('answered');
+          }
+        }
+        q5Labels.forEach(function (label) {
+          if (label.dataset.team !== selectedTeam) {
+            label.classList.add('greyed-out');
+          } else {
+            label.classList.remove('greyed-out');
+          }
+        });
+      });
     });
 
     // Mark cards as answered when a radio is selected

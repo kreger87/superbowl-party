@@ -517,18 +517,6 @@
       font-weight: 700;
     }
 
-    .change-name-link {
-      color: var(--silver);
-      font-size: 0.85rem;
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: 8px;
-      display: inline-block;
-    }
-
-    .change-name-link:hover {
-      color: #fff;
-    }
 
     /* Admin Tab */
     .admin-gate {
@@ -995,7 +983,7 @@ const QUESTIONS = {
   q6: "First Half Total Points",
   q7: "Bad Bunny's First Song",
   q8: "Halftime Guest",
-  q9: "QB with More Yards",
+  q9: "QB Throws For More Yards",
   q10: "Defensive/ST TD?",
   q11: "Total Game Points",
   q12: "Longest Field Goal",
@@ -1332,17 +1320,11 @@ function renderMyPicks() {
         <input type="text" class="name-input" id="myNameInput" placeholder="Your name" autocomplete="off" value="${escapeHtml(savedName)}">
         <br>
         <button class="btn-save-name" id="btnSetName">Try Again</button>
-        <br>
-        <span class="change-name-link" id="clearName">Clear saved name</span>
       </div>
     `;
     document.getElementById('btnSetName').addEventListener('click', saveName);
     document.getElementById('myNameInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') saveName();
-    });
-    document.getElementById('clearName').addEventListener('click', () => {
-      localStorage.removeItem('sbPartyName');
-      renderMyPicks();
     });
     return;
   }
@@ -1352,7 +1334,6 @@ function renderMyPicks() {
       <h2>${escapeHtml(player.name)}</h2>
       <div class="my-score">${player.score} pts</div>
       <div class="my-correct">${player.correct} correct out of ${player.total > 0 ? player.total : 16} answered</div>
-      <span class="change-name-link" id="changeName">Change name</span>
     </div>
     <div class="my-picks-grid">
       <div class="my-pick-row header-row pick-pending" style="border-left-color: transparent;">
@@ -1395,11 +1376,6 @@ function renderMyPicks() {
 
   html += '</div>';
   area.innerHTML = html;
-
-  document.getElementById('changeName').addEventListener('click', () => {
-    localStorage.removeItem('sbPartyName');
-    renderMyPicks();
-  });
 }
 
 function saveName() {
