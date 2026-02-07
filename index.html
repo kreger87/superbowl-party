@@ -955,22 +955,22 @@
           <span class="q-title-text">Super Bowl MVP</span>
         </div>
         <div class="options-grid">
-          <label class="option-label">
+          <label class="option-label" data-team="Seahawks">
             <input type="radio" name="q14" value="Sam Darnold" />
             <span class="option-text">Sam Darnold</span>
             <span class="pts-badge low">2 pts</span>
           </label>
-          <label class="option-label">
+          <label class="option-label" data-team="Patriots">
             <input type="radio" name="q14" value="Drake Maye" />
             <span class="option-text">Drake Maye</span>
             <span class="pts-badge mid">3 pts</span>
           </label>
-          <label class="option-label">
+          <label class="option-label" data-team="Seahawks">
             <input type="radio" name="q14" value="Kenneth Walker III" />
             <span class="option-text">Kenneth Walker III</span>
             <span class="pts-badge high">5 pts</span>
           </label>
-          <label class="option-label">
+          <label class="option-label" data-team="Seahawks">
             <input type="radio" name="q14" value="Jaxon Smith-Njigba" />
             <span class="option-text">Jaxon Smith-Njigba</span>
             <span class="pts-badge high">5 pts</span>
@@ -1157,30 +1157,35 @@
       location.reload();
     });
 
-    // Grey out opposing team players in Q5 based on Q4 selection
-    document.querySelectorAll('input[name="q4"]').forEach(function (radio) {
-      radio.addEventListener('change', function () {
-        var selectedTeam = this.value;
-        var q5Labels = document.querySelectorAll('[data-q="q5"] .option-label[data-team]');
-        // Clear any existing Q5 selection if it's now greyed out
-        var q5Selected = form.querySelector('input[name="q5"]:checked');
-        if (q5Selected) {
-          var parentLabel = q5Selected.closest('.option-label');
-          if (parentLabel.dataset.team && parentLabel.dataset.team !== selectedTeam) {
-            q5Selected.checked = false;
-            var card = parentLabel.closest('.question-card');
-            card.classList.remove('answered');
+    // Grey out opposing team players based on team selection
+    function applyTeamFilter(triggerName, targetQ, targetName) {
+      document.querySelectorAll('input[name="' + triggerName + '"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          var selectedTeam = this.value;
+          var labels = document.querySelectorAll('[data-q="' + targetQ + '"] .option-label[data-team]');
+          // Clear selection if it's now greyed out
+          var selected = form.querySelector('input[name="' + targetName + '"]:checked');
+          if (selected) {
+            var parentLabel = selected.closest('.option-label');
+            if (parentLabel.dataset.team && parentLabel.dataset.team !== selectedTeam) {
+              selected.checked = false;
+              var card = parentLabel.closest('.question-card');
+              card.classList.remove('answered');
+            }
           }
-        }
-        q5Labels.forEach(function (label) {
-          if (label.dataset.team !== selectedTeam) {
-            label.classList.add('greyed-out');
-          } else {
-            label.classList.remove('greyed-out');
-          }
+          labels.forEach(function (label) {
+            if (label.dataset.team !== selectedTeam) {
+              label.classList.add('greyed-out');
+            } else {
+              label.classList.remove('greyed-out');
+            }
+          });
         });
       });
-    });
+    }
+
+    applyTeamFilter('q4', 'q5', 'q5');   // First Team to Score → First TD Scorer
+    applyTeamFilter('q13', 'q14', 'q14'); // Super Bowl Winner → Super Bowl MVP
 
     // Mark cards as answered when a radio is selected
     document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
