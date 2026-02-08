@@ -81,6 +81,12 @@ CREATE POLICY "Anyone can read picks"
   TO anon
   USING (true);
 
+CREATE POLICY "Anyone can update picks"
+  ON party_picks FOR UPDATE
+  TO anon
+  USING (true)
+  WITH CHECK (true);
+
 CREATE POLICY "Anyone can delete picks"
   ON party_picks FOR DELETE
   TO anon
