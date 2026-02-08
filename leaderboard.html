@@ -782,6 +782,45 @@
       color: #fff;
     }
 
+    .admin-checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .admin-checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      color: #e0e0e0;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .admin-checkbox-group label:hover {
+      border-color: rgba(105, 190, 40, 0.4);
+      background: rgba(105, 190, 40, 0.06);
+    }
+
+    .admin-checkbox-group input[type="checkbox"] {
+      accent-color: var(--green);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .admin-checkbox-group label.checked {
+      border-color: var(--green);
+      background: rgba(105, 190, 40, 0.12);
+      color: #fff;
+    }
+
     .btn-save-answers {
       background: var(--silver);
       color: #555;
@@ -1986,7 +2025,10 @@ function calculateScores(picks, answers) {
       const key = 'q' + i;
       if (answers[key] && answers[key] !== '') {
         total++;
-        if (p[key] && p[key] === answers[key]) {
+        const isCorrect = key === 'q16'
+          ? (p[key] && answers[key].split(',').includes(p[key]))
+          : (p[key] && p[key] === answers[key]);
+        if (isCorrect) {
           correct++;
           const pts = POINT_VALUES[key] && POINT_VALUES[key][p[key]];
           if (pts) score += pts;
@@ -2126,7 +2168,10 @@ function showPlayerDetail(name) {
     let ptsClass = 'pts-pending';
 
     if (answer) {
-      if (pick === answer) {
+      const isCorrect = key === 'q16'
+        ? (pick !== '(no pick)' && answer.split(',').includes(pick))
+        : (pick === answer);
+      if (isCorrect) {
         rowClass = 'pick-correct';
         const pts = POINT_VALUES[key] && POINT_VALUES[key][pick] ? POINT_VALUES[key][pick] : 0;
         ptsText = '+' + pts;
@@ -2138,11 +2183,15 @@ function showPlayerDetail(name) {
       }
     }
 
+    const displayAnswer = answer
+      ? (key === 'q16' ? escapeHtml(answer.split(',').join(', ')) : escapeHtml(answer))
+      : '(pending)';
+
     html += `
       <div class="pick-row ${rowClass}">
         <div class="q-label">${label}</div>
         <div class="pick-val">${escapeHtml(pick)}</div>
-        <div class="answer-val">${answer ? escapeHtml(answer) : '(pending)'}</div>
+        <div class="answer-val">${displayAnswer}</div>
         <div class="pts-val ${ptsClass}">${ptsText}</div>
       </div>
     `;
@@ -2260,7 +2309,10 @@ function renderMyPicks() {
     let ptsText = '--';
 
     if (answer) {
-      if (pick === answer) {
+      const isCorrect = key === 'q16'
+        ? (pick !== '(no pick)' && answer.split(',').includes(pick))
+        : (pick === answer);
+      if (isCorrect) {
         rowClass = 'pick-correct';
         const pts = POINT_VALUES[key] && POINT_VALUES[key][pick] ? POINT_VALUES[key][pick] : 0;
         ptsText = '+' + pts;
@@ -2270,12 +2322,19 @@ function renderMyPicks() {
       }
     }
 
+    const myDisplayAnswer = answer
+      ? (key === 'q16' ? escapeHtml(answer.split(',').join(', ')) : escapeHtml(answer))
+      : '(pending)';
+    const isMyCorrect = answer && (key === 'q16'
+      ? (pick !== '(no pick)' && answer.split(',').includes(pick))
+      : (pick === answer));
+
     html += `
       <div class="my-pick-row ${rowClass}">
         <div style="font-weight:600; color: var(--silver);">${label}</div>
         <div style="color:#e0e0e0;">${escapeHtml(pick)}</div>
-        <div style="color:#e0e0e0;">${answer ? escapeHtml(answer) : '(pending)'}</div>
-        <div class="col-pts" style="color: ${answer ? (pick === answer ? 'var(--green)' : 'var(--red)') : 'var(--silver)'};">${ptsText}</div>
+        <div style="color:#e0e0e0;">${myDisplayAnswer}</div>
+        <div class="col-pts" style="color: ${answer ? (isMyCorrect ? 'var(--green)' : 'var(--red)') : 'var(--silver)'};">${ptsText}</div>
       </div>
     `;
   }
@@ -2437,15 +2496,29 @@ function snapshotAdminState() {
   }
 }
 
+function getQ16CheckboxValue() {
+  const group = document.getElementById('admin-q16');
+  if (!group) return '';
+  const checked = Array.from(group.querySelectorAll('input[type="checkbox"]:checked'));
+  return checked.map(cb => cb.value).join(',');
+}
+
 function checkAdminDirty() {
   const btn = document.getElementById('btnSaveAnswers');
   let dirty = false;
   for (let i = 1; i <= 16; i++) {
     const key = 'q' + i;
-    const sel = document.getElementById('admin-' + key);
-    if (sel && sel.value !== (savedAdminState[key] || '')) {
-      dirty = true;
-      break;
+    if (key === 'q16') {
+      if (getQ16CheckboxValue() !== (savedAdminState[key] || '')) {
+        dirty = true;
+        break;
+      }
+    } else {
+      const sel = document.getElementById('admin-' + key);
+      if (sel && sel.value !== (savedAdminState[key] || '')) {
+        dirty = true;
+        break;
+      }
     }
   }
   btn.classList.toggle('dirty', dirty);
@@ -2462,21 +2535,43 @@ function buildAdminForm() {
     const opts = OPTIONS[key];
     const currentVal = currentAnswers[key] || '';
 
-    html += `
-      <div class="admin-q-row">
-        <div class="admin-q-label">
-          Q${i}: ${label}
-          <br><span>${opts.map(o => {
-            const pts = POINT_VALUES[key][o];
-            return o + ' (' + pts + 'pt' + (pts > 1 ? 's' : '') + ')';
-          }).join(', ')}</span>
+    if (key === 'q16') {
+      // Multi-select checkboxes for Q16 (multiple correct answers)
+      const checkedVals = currentVal ? currentVal.split(',') : [];
+      html += `
+        <div class="admin-q-row" style="grid-template-columns: 1fr;">
+          <div class="admin-q-label">
+            Q${i}: ${label}
+            <br><span>${opts.map(o => {
+              const pts = POINT_VALUES[key][o];
+              return o + ' (' + pts + 'pt' + (pts > 1 ? 's' : '') + ')';
+            }).join(', ')}</span>
+          </div>
+          <div class="admin-checkbox-group" id="admin-${key}">
+            ${opts.map(o => {
+              const isChecked = checkedVals.includes(o);
+              return `<label class="${isChecked ? 'checked' : ''}"><input type="checkbox" name="admin-q16" value="${escapeHtml(o)}" ${isChecked ? 'checked' : ''} />${escapeHtml(o)}</label>`;
+            }).join('')}
+          </div>
         </div>
-        <select class="admin-select" id="admin-${key}" data-key="${key}">
-          <option value="">(Not yet)</option>
-          ${opts.map(o => `<option value="${escapeHtml(o)}" ${currentVal === o ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('')}
-        </select>
-      </div>
-    `;
+      `;
+    } else {
+      html += `
+        <div class="admin-q-row">
+          <div class="admin-q-label">
+            Q${i}: ${label}
+            <br><span>${opts.map(o => {
+              const pts = POINT_VALUES[key][o];
+              return o + ' (' + pts + 'pt' + (pts > 1 ? 's' : '') + ')';
+            }).join(', ')}</span>
+          </div>
+          <select class="admin-select" id="admin-${key}" data-key="${key}">
+            <option value="">(Not yet)</option>
+            ${opts.map(o => `<option value="${escapeHtml(o)}" ${currentVal === o ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('')}
+          </select>
+        </div>
+      `;
+    }
   }
 
   form.innerHTML = html;
@@ -2485,6 +2580,17 @@ function buildAdminForm() {
   form.querySelectorAll('.admin-select').forEach(sel => {
     sel.addEventListener('change', checkAdminDirty);
   });
+
+  // Listen for Q16 checkbox changes
+  const q16Group = document.getElementById('admin-q16');
+  if (q16Group) {
+    q16Group.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', function () {
+        this.closest('label').classList.toggle('checked', this.checked);
+        checkAdminDirty();
+      });
+    });
+  }
 
   checkAdminDirty();
 }
@@ -2509,8 +2615,13 @@ document.getElementById('btnSaveAnswers').addEventListener('click', async () => 
   const updateObj = {};
   for (let i = 1; i <= 16; i++) {
     const key = 'q' + i;
-    const sel = document.getElementById('admin-' + key);
-    updateObj[key] = sel.value || null;
+    if (key === 'q16') {
+      const val = getQ16CheckboxValue();
+      updateObj[key] = val || null;
+    } else {
+      const sel = document.getElementById('admin-' + key);
+      updateObj[key] = sel.value || null;
+    }
   }
 
   try {
