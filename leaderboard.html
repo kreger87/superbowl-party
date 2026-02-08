@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Super Bowl LX Leaderboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --navy: #002244;
@@ -444,47 +445,83 @@
       font-size: 0.95rem;
     }
 
-    .name-input-section {
+    .name-picker-section {
       text-align: center;
-      padding: 40px 20px;
+      padding: 30px 20px;
+      max-width: 400px;
+      margin: 0 auto;
     }
 
-    .name-input-section p {
+    .name-picker-section p {
       color: var(--silver);
       margin-bottom: 16px;
       font-size: 1rem;
     }
 
-    .name-input {
-      padding: 12px 18px;
-      border: 2px solid rgba(105, 190, 40, 0.4);
-      border-radius: 8px;
+    .name-picker-search {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid rgba(105, 190, 40, 0.3);
+      border-radius: 12px;
       background: rgba(255,255,255,0.05);
       color: #fff;
-      font-size: 1rem;
-      width: 100%;
-      max-width: 300px;
+      font-size: 0.95rem;
       outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
       margin-bottom: 12px;
+      font-family: inherit;
     }
 
-    .name-input:focus {
+    .name-picker-search::placeholder {
+      color: var(--silver);
+    }
+
+    .name-picker-search:focus {
       border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(105, 190, 40, 0.1);
     }
 
-    .btn-save-name {
-      background: var(--green);
-      color: var(--navy);
-      padding: 12px 28px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 1rem;
+    .name-picker-list {
+      list-style: none;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .name-picker-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 12px 14px;
+      border: 2px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      margin-bottom: 6px;
       cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #e0e0e0;
+      transition: all 0.15s;
+      text-align: left;
     }
 
-    .btn-save-name:hover {
-      background: #7cd633;
+    .name-picker-list li::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    .name-picker-list li:hover {
+      border-color: var(--green);
+      background: rgba(105, 190, 40, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .name-picker-empty {
+      color: var(--silver);
+      font-size: 0.9rem;
+      padding: 20px;
     }
 
     .my-picks-grid {
@@ -519,55 +556,6 @@
 
 
     /* Admin Tab */
-    .admin-gate {
-      text-align: center;
-      padding: 60px 20px;
-    }
-
-    .admin-gate p {
-      color: var(--silver);
-      font-size: 1.1rem;
-      margin-bottom: 20px;
-    }
-
-    .admin-pw-input {
-      padding: 12px 18px;
-      border: 2px solid rgba(198, 12, 48, 0.4);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      font-size: 1rem;
-      width: 100%;
-      max-width: 300px;
-      outline: none;
-      margin-bottom: 12px;
-    }
-
-    .admin-pw-input:focus {
-      border-color: var(--red);
-    }
-
-    .btn-unlock {
-      background: var(--red);
-      color: #fff;
-      padding: 12px 28px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-
-    .btn-unlock:hover {
-      background: #e00e36;
-    }
-
-    .admin-error {
-      color: var(--red);
-      font-size: 0.9rem;
-      margin-top: 8px;
-    }
-
     .admin-panel {
       display: none;
     }
@@ -576,6 +564,130 @@
       display: block;
     }
 
+    .admin-section-title {
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .admin-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      margin: 28px 0;
+    }
+
+    /* Share Section */
+    .admin-share-section {
+      margin-bottom: 8px;
+    }
+
+    .admin-share-subtitle {
+      color: var(--silver);
+      font-size: 0.9rem;
+      margin-top: 4px;
+      margin-bottom: 20px;
+    }
+
+    .share-content {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .qr-wrapper {
+      flex-shrink: 0;
+      background: #fff;
+      padding: 10px;
+      border-radius: 16px;
+      line-height: 0;
+    }
+
+    .qr-wrapper img, .qr-wrapper canvas {
+      border-radius: 8px;
+      display: block;
+    }
+
+    .share-links {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .share-link-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .share-link-label {
+      color: var(--silver);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .share-link-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .share-link-input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 14px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: #e0e0e0;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .share-link-input:focus {
+      border-color: var(--green);
+    }
+
+    .btn-copy {
+      padding: 10px 16px;
+      background: var(--green);
+      color: var(--navy);
+      border: none;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-copy:hover {
+      background: #7cd633;
+      transform: translateY(-1px);
+    }
+
+    .btn-copy.copied {
+      background: rgba(105, 190, 40, 0.2);
+      color: var(--green);
+    }
+
+    @media (max-width: 600px) {
+      .share-content {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .share-links {
+        width: 100%;
+      }
+    }
+
+    /* Admin Header / Stats */
     .admin-header {
       display: flex;
       justify-content: space-between;
@@ -585,20 +697,15 @@
       margin-bottom: 20px;
     }
 
-    .admin-header h2 {
-      color: #fff;
-      font-size: 1.4rem;
-    }
-
     .admin-stats {
       display: flex;
-      gap: 16px;
+      gap: 12px;
     }
 
     .admin-stat {
       background: rgba(255,255,255,0.06);
       padding: 10px 16px;
-      border-radius: 8px;
+      border-radius: 12px;
       text-align: center;
     }
 
@@ -615,9 +722,10 @@
       letter-spacing: 0.5px;
     }
 
+    /* Answer Form */
     .admin-form-grid {
       display: grid;
-      gap: 12px;
+      gap: 10px;
     }
 
     .admin-q-row {
@@ -625,9 +733,14 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       background: rgba(255,255,255,0.04);
-      padding: 14px;
-      border-radius: 10px;
+      padding: 14px 16px;
+      border-radius: 14px;
       align-items: center;
+      transition: background 0.15s;
+    }
+
+    .admin-q-row:hover {
+      background: rgba(255,255,255,0.06);
     }
 
     .admin-q-label {
@@ -643,9 +756,9 @@
     }
 
     .admin-select {
-      padding: 10px 12px;
+      padding: 11px 14px;
       border: 2px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
+      border-radius: 12px;
       background: rgba(255,255,255,0.06);
       color: #fff;
       font-size: 0.95rem;
@@ -655,8 +768,9 @@
       -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A5ACAF' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 32px;
+      background-position: right 14px center;
+      padding-right: 34px;
+      transition: border-color 0.15s;
     }
 
     .admin-select:focus {
@@ -673,7 +787,7 @@
       color: #555;
       padding: 14px 36px;
       border: none;
-      border-radius: 10px;
+      border-radius: 14px;
       font-weight: 800;
       font-size: 1.1rem;
       cursor: not-allowed;
@@ -682,6 +796,7 @@
       transition: all 0.2s;
       pointer-events: none;
       opacity: 0.6;
+      font-family: inherit;
     }
 
     .btn-save-answers.dirty {
@@ -700,15 +815,16 @@
     .btn-reset-answers {
       background: transparent;
       color: var(--silver);
-      border: 2px solid rgba(165, 172, 175, 0.3);
+      border: 2px solid rgba(165, 172, 175, 0.2);
       padding: 12px 36px;
-      border-radius: 10px;
+      border-radius: 14px;
       font-weight: 700;
       font-size: 0.95rem;
       cursor: pointer;
       margin-top: 10px;
       width: 100%;
       transition: all 0.2s;
+      font-family: inherit;
     }
 
     .btn-reset-answers:hover {
@@ -720,7 +836,7 @@
       text-align: center;
       padding: 12px;
       margin-top: 12px;
-      border-radius: 8px;
+      border-radius: 12px;
       font-weight: 600;
       display: none;
     }
@@ -735,6 +851,59 @@
       display: block;
       background: rgba(198, 12, 48, 0.15);
       color: var(--red);
+    }
+
+    /* Submitted Players */
+    .admin-players-section {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .admin-players-title {
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .admin-player-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 16px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      margin-bottom: 6px;
+      transition: background 0.15s;
+    }
+
+    .admin-player-row:hover {
+      background: rgba(255,255,255,0.07);
+    }
+
+    .admin-player-row .player-name {
+      color: #e0e0e0;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .btn-delete-pick {
+      background: transparent;
+      border: 1.5px solid rgba(198, 12, 48, 0.3);
+      color: var(--red);
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .btn-delete-pick:hover {
+      background: rgba(198, 12, 48, 0.12);
+      border-color: var(--red);
     }
 
     /* TV Mode */
@@ -1133,21 +1302,156 @@
       display: block;
     }
 
-    .btn-switch-party {
-      background: transparent;
-      color: var(--silver);
-      border: 1px solid rgba(165, 172, 175, 0.3);
-      padding: 8px 16px;
-      border-radius: 50px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
+    /* Onboarding Modal */
+    .onboarding-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1001;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
     }
 
-    .btn-switch-party:hover {
+    .onboarding-overlay.show {
+      display: flex;
+    }
+
+    .onboarding-box {
+      background: #111827;
+      border: 2px solid rgba(105, 190, 40, 0.3);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: lbModalSlideIn 0.3s ease;
+      text-align: center;
+    }
+
+    .onboarding-box h2 {
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+
+    .onboarding-box .onboarding-subtitle {
+      color: var(--silver);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .onboarding-qr {
+      display: inline-block;
+      background: #fff;
+      padding: 10px;
+      border-radius: 16px;
+      line-height: 0;
+      margin-bottom: 1rem;
+    }
+
+    .onboarding-qr img, .onboarding-qr canvas {
+      border-radius: 8px;
+      display: block;
+    }
+
+    .onboarding-share-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+    }
+
+    .onboarding-share-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 14px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: #e0e0e0;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .onboarding-share-row input:focus {
       border-color: var(--green);
+    }
+
+    .onboarding-tips {
+      text-align: left;
+      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 1.5rem;
+    }
+
+    .onboarding-tips-title {
       color: var(--green);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .onboarding-tips ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .onboarding-tips li {
+      color: #c8c8d0;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      padding: 4px 0;
+      padding-left: 1.2em;
+      position: relative;
+    }
+
+    .onboarding-tips li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 11px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .onboarding-tips strong {
+      color: #fff;
+    }
+
+    .btn-onboarding-done {
+      background: var(--green);
+      color: var(--navy);
+      border: none;
+      padding: 14px 36px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(105, 190, 40, 0.3);
+    }
+
+    .btn-onboarding-done:hover {
+      background: #7cd633;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(105, 190, 40, 0.4);
+    }
+
+    @media (max-width: 600px) {
+      .onboarding-box { padding: 1.5rem; }
+      .onboarding-box h2 { font-size: 1.3rem; }
     }
 
     /* Scrollbar */
@@ -1189,12 +1493,34 @@
     </div>
   </div>
 
+  <!-- Onboarding Modal (shown after party creation) -->
+  <div class="onboarding-overlay" id="onboardingModal">
+    <div class="onboarding-box">
+      <h2>Party created!</h2>
+      <p class="onboarding-subtitle">Share this with your guests so they can submit picks</p>
+      <div class="onboarding-qr" id="onboardingQr"></div>
+      <div class="onboarding-share-row">
+        <input type="text" id="onboardingShareUrl" readonly />
+        <button class="btn-copy" id="onboardingCopyBtn">Copy</button>
+      </div>
+      <div class="onboarding-tips">
+        <div class="onboarding-tips-title">Admin tab</div>
+        <ul>
+          <li>Enter correct answers during the game &mdash; scores update live</li>
+          <li>Remove players and re-share the link anytime</li>
+          <li>QR code and share links live there too</li>
+        </ul>
+      </div>
+      <button class="btn-onboarding-done" id="onboardingDoneBtn">Got it</button>
+    </div>
+  </div>
+
   <!-- Main content (hidden until party selected) -->
   <div id="main-content">
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="leaderboard">Leaderboard</button>
     <button class="tab-btn" data-tab="mypicks">My Picks</button>
-    <button class="tab-btn" data-tab="admin">Admin</button>
+    <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display:none">Admin</button>
   </div>
 
   <!-- TAB 1: Leaderboard -->
@@ -1203,7 +1529,6 @@
       <input type="text" class="search-box" id="searchBox" placeholder="Search by name..." autocomplete="off">
       <button class="btn btn-refresh" id="btnRefresh">Refresh</button>
       <button class="btn btn-tv" id="btnTV">TV Mode</button>
-      <button class="btn-switch-party" id="btnSwitchParty">Switch Party</button>
       <span class="refresh-timer" id="refreshTimer">Next refresh in 30s</span>
     </div>
     <div id="leaderboardArea">
@@ -1220,16 +1545,38 @@
 
   <!-- TAB 3: Admin -->
   <div class="tab-content" id="tab-admin">
-    <div class="admin-gate" id="adminGate">
-      <p>Enter the admin password to manage answers</p>
-      <input type="password" class="admin-pw-input" id="adminPwInput" placeholder="Password" autocomplete="new-password">
-      <br>
-      <button class="btn-unlock" id="btnUnlock">Unlock Admin</button>
-      <div class="admin-error" id="adminError"></div>
-    </div>
     <div class="admin-panel" id="adminPanel">
+
+      <!-- Share Section -->
+      <div class="admin-share-section">
+        <h2 class="admin-section-title">Share Your Party</h2>
+        <p class="admin-share-subtitle">Guests scan the QR code or tap the link to join</p>
+        <div class="share-content">
+          <div class="qr-wrapper" id="qrCode"></div>
+          <div class="share-links">
+            <div class="share-link-group">
+              <label class="share-link-label">Picks Form</label>
+              <div class="share-link-row">
+                <input type="text" class="share-link-input" id="sharePicksUrl" readonly />
+                <button class="btn-copy" data-target="sharePicksUrl">Copy</button>
+              </div>
+            </div>
+            <div class="share-link-group">
+              <label class="share-link-label">Leaderboard</label>
+              <div class="share-link-row">
+                <input type="text" class="share-link-input" id="shareLeaderboardUrl" readonly />
+                <button class="btn-copy" data-target="shareLeaderboardUrl">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-divider"></div>
+
+      <!-- Answers Section -->
       <div class="admin-header">
-        <h2>Set Correct Answers</h2>
+        <h2 class="admin-section-title">Set Correct Answers</h2>
         <div class="admin-stats">
           <div class="admin-stat">
             <div class="stat-val" id="statAnswered">0/16</div>
@@ -1245,6 +1592,11 @@
       <button class="btn-save-answers" id="btnSaveAnswers">Save Answers</button>
       <button class="btn-reset-answers" id="btnResetAnswers">Reset All Answers</button>
       <div class="save-confirm" id="saveConfirm"></div>
+
+      <div class="admin-players-section">
+        <h3 class="admin-players-title">Submitted Players</h3>
+        <div id="adminPlayersList"></div>
+      </div>
     </div>
   </div>
 
@@ -1351,10 +1703,53 @@ let tvMode = false;
 // ============================================================
 // PARTY GATE
 // ============================================================
-const partyId = localStorage.getItem('sbPartyId');
-const partyDisplayName = localStorage.getItem('sbPartyDisplayName');
+let partyId = localStorage.getItem('sbPartyId');
+let partyDisplayName = localStorage.getItem('sbPartyDisplayName');
 
-(function initPartyGate() {
+(async function initPartyGate() {
+  // Clear old integer-format party IDs (pre-UUID migration)
+  if (partyId && /^\d+$/.test(partyId)) {
+    localStorage.removeItem('sbPartyId');
+    localStorage.removeItem('sbPartyDisplayName');
+    localStorage.removeItem('sbPartyName');
+    location.reload();
+    return;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+
+  // Handle ?admin=TOKEN — store creator token
+  const adminToken = urlParams.get('admin');
+  if (adminToken) {
+    const targetParty = urlParams.get('party') || partyId;
+    if (targetParty) {
+      const tokens = JSON.parse(localStorage.getItem('sbCreatorTokens') || '{}');
+      tokens[targetParty] = adminToken;
+      localStorage.setItem('sbCreatorTokens', JSON.stringify(tokens));
+    }
+  }
+
+  // Handle ?party=UUID deep link
+  const partyParam = urlParams.get('party');
+  if (partyParam && partyParam !== partyId) {
+    const { data } = await supabaseClient
+      .from('parties')
+      .select('id, name')
+      .eq('id', partyParam)
+      .single();
+    if (data) {
+      localStorage.setItem('sbPartyId', data.id);
+      localStorage.setItem('sbPartyDisplayName', data.name);
+      partyId = data.id;
+      partyDisplayName = data.name;
+    }
+  }
+
+  // Strip URL params
+  if (urlParams.has('party') || urlParams.has('admin')) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
   if (!partyId) {
     document.getElementById('party-gate').style.display = 'block';
     document.getElementById('main-content').style.display = 'none';
@@ -1364,6 +1759,35 @@ const partyDisplayName = localStorage.getItem('sbPartyDisplayName');
 
   // Show party name in header
   document.getElementById('header-party-name').textContent = ' \u2022 ' + partyDisplayName;
+
+  // Check if user is creator (has valid token) — show admin tab
+  const tokens = JSON.parse(localStorage.getItem('sbCreatorTokens') || '{}');
+  const myToken = tokens[partyId];
+  if (myToken) {
+    try {
+      const { data: isCreator } = await supabaseClient.rpc('verify_creator_token', {
+        p_party_id: partyId,
+        p_token: myToken
+      });
+      if (isCreator) {
+        document.getElementById('adminTabBtn').style.display = '';
+      }
+    } catch (err) {
+      console.error('Error verifying creator token:', err);
+    }
+  }
+
+  // Show onboarding modal for first-time admins
+  const isAdmin = document.getElementById('adminTabBtn').style.display !== 'none';
+  const onboardedKey = 'sbOnboarded_' + partyId;
+  if (isAdmin && !localStorage.getItem(onboardedKey)) {
+    localStorage.setItem(onboardedKey, '1');
+    showOnboardingModal();
+  }
+
+  // Start data fetch and refresh timer now that partyId is confirmed
+  fetchData();
+  startRefreshTimer();
 })();
 
 let lbAllParties = [];
@@ -1371,7 +1795,7 @@ let lbAllParties = [];
 async function loadLbParties() {
   const { data, error } = await supabaseClient
     .from('parties')
-    .select('*')
+    .select('id, name, created_at')
     .order('name');
 
   if (error) {
@@ -1413,7 +1837,7 @@ const lbModalCancelBtn = document.getElementById('lb-modal-cancel');
 const lbModalErrorEl = document.getElementById('lb-modal-error');
 
 document.getElementById('lb-party-create-btn').addEventListener('click', function () {
-  lbModalNameInput.value = '';
+  lbModalNameInput.value = document.getElementById('lb-party-search').value.trim();
   lbModalErrorEl.classList.remove('visible');
   lbCreateModal.classList.add('show');
   setTimeout(() => lbModalNameInput.focus(), 100);
@@ -1446,11 +1870,8 @@ async function doLbCreateParty() {
   lbModalConfirmBtn.textContent = 'Creating...';
 
   try {
-    const { data: partyData, error: partyError } = await supabaseClient
-      .from('parties')
-      .insert({ name: name })
-      .select()
-      .single();
+    const { data: partyRows, error: partyError } = await supabaseClient
+      .rpc('create_party', { p_name: name });
 
     if (partyError) {
       if (partyError.code === '23505') {
@@ -1460,9 +1881,12 @@ async function doLbCreateParty() {
       throw partyError;
     }
 
-    await supabaseClient
-      .from('party_answers')
-      .insert({ party_id: partyData.id });
+    const partyData = partyRows[0];
+
+    // Save creator token for admin access
+    const tokens = JSON.parse(localStorage.getItem('sbCreatorTokens') || '{}');
+    tokens[partyData.id] = partyData.creator_token;
+    localStorage.setItem('sbCreatorTokens', JSON.stringify(tokens));
 
     localStorage.setItem('sbPartyId', partyData.id);
     localStorage.setItem('sbPartyDisplayName', partyData.name);
@@ -1486,12 +1910,51 @@ function hideLbModalError() {
   lbModalErrorEl.classList.remove('visible');
 }
 
-// Switch Party button
-document.getElementById('btnSwitchParty').addEventListener('click', function () {
-  localStorage.removeItem('sbPartyId');
-  localStorage.removeItem('sbPartyDisplayName');
-  localStorage.removeItem('sbPartyName');
-  location.reload();
+// ============================================================
+// ONBOARDING MODAL
+// ============================================================
+function showOnboardingModal() {
+  const origin = window.location.origin;
+  const basePath = window.location.pathname.replace(/\/[^/]*$/, '/');
+  const picksUrl = origin + basePath + 'index.html?party=' + partyId;
+
+  // Set share URL
+  document.getElementById('onboardingShareUrl').value = picksUrl;
+
+  // Generate QR code
+  const qrContainer = document.getElementById('onboardingQr');
+  qrContainer.innerHTML = '';
+  new QRCode(qrContainer, {
+    text: picksUrl,
+    width: 180,
+    height: 180,
+    colorDark: '#002244',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  document.getElementById('onboardingModal').classList.add('show');
+}
+
+document.getElementById('onboardingCopyBtn').addEventListener('click', function () {
+  const input = document.getElementById('onboardingShareUrl');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = this;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+});
+
+document.getElementById('onboardingDoneBtn').addEventListener('click', function () {
+  document.getElementById('onboardingModal').classList.remove('show');
+});
+
+document.getElementById('onboardingModal').addEventListener('click', function (e) {
+  if (e.target === this) this.classList.remove('show');
 });
 
 // ============================================================
@@ -1760,18 +2223,7 @@ function renderMyPicks() {
   const savedName = localStorage.getItem('sbPartyName');
 
   if (!savedName) {
-    area.innerHTML = `
-      <div class="name-input-section">
-        <p>Enter the name you used when submitting your picks:</p>
-        <input type="text" class="name-input" id="myNameInput" placeholder="Your name" autocomplete="off">
-        <br>
-        <button class="btn-save-name" id="btnSetName">View My Picks</button>
-      </div>
-    `;
-    document.getElementById('btnSetName').addEventListener('click', saveName);
-    document.getElementById('myNameInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') saveName();
-    });
+    renderNamePicker(area, 'Select your name to view your picks:');
     return;
   }
 
@@ -1779,19 +2231,7 @@ function renderMyPicks() {
   const player = leaderboardData.find(d => d.name.toLowerCase() === savedName.toLowerCase());
 
   if (!player) {
-    area.innerHTML = `
-      <div class="name-input-section">
-        <p>Could not find picks for "${escapeHtml(savedName)}"</p>
-        <p style="font-size:0.85rem; margin-top:8px; color: var(--silver);">Check the name or try again.</p>
-        <input type="text" class="name-input" id="myNameInput" placeholder="Your name" autocomplete="off" value="${escapeHtml(savedName)}">
-        <br>
-        <button class="btn-save-name" id="btnSetName">Try Again</button>
-      </div>
-    `;
-    document.getElementById('btnSetName').addEventListener('click', saveName);
-    document.getElementById('myNameInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') saveName();
-    });
+    renderNamePicker(area, `Could not find "${escapeHtml(savedName)}". Select your name:`);
     return;
   }
 
@@ -1844,46 +2284,147 @@ function renderMyPicks() {
   area.innerHTML = html;
 }
 
-function saveName() {
-  const input = document.getElementById('myNameInput');
-  const name = input.value.trim();
-  if (!name) return;
-  localStorage.setItem('sbPartyName', name);
-  renderMyPicks();
+function renderNamePicker(area, message) {
+  const names = allPicks.map(p => p.name).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+  if (names.length === 0) {
+    area.innerHTML = `<div class="name-picker-section"><p>No picks submitted yet for this party.</p></div>`;
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="name-picker-section">
+      <p>${message}</p>
+      <input type="text" class="name-picker-search" id="namePickerSearch" placeholder="Filter names..." autocomplete="off">
+      <ul class="name-picker-list" id="namePickerList"></ul>
+    </div>
+  `;
+
+  function renderList() {
+    const list = document.getElementById('namePickerList');
+    const filter = document.getElementById('namePickerSearch').value.trim().toLowerCase();
+    const filtered = filter ? names.filter(n => n.toLowerCase().includes(filter)) : names;
+
+    list.innerHTML = '';
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="name-picker-empty">No matching names</div>';
+      return;
+    }
+    filtered.forEach(function (name) {
+      const li = document.createElement('li');
+      li.textContent = name;
+      li.addEventListener('click', function () {
+        localStorage.setItem('sbPartyName', name);
+        renderMyPicks();
+      });
+      list.appendChild(li);
+    });
+  }
+
+  renderList();
+  document.getElementById('namePickerSearch').addEventListener('input', renderList);
 }
 
 // ============================================================
-// ADMIN TAB (party-scoped)
+// ADMIN TAB (creator-token-based)
 // ============================================================
-const ADMIN_PASSWORD = 'superbowl60';
-
 function checkAdminAuth() {
-  const unlocked = sessionStorage.getItem('sbAdminUnlocked');
-  if (unlocked === 'true') {
-    showAdminPanel();
-  }
-}
-
-document.getElementById('btnUnlock').addEventListener('click', attemptUnlock);
-document.getElementById('adminPwInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') attemptUnlock();
-});
-
-function attemptUnlock() {
-  const pw = document.getElementById('adminPwInput').value;
-  if (pw === ADMIN_PASSWORD) {
-    sessionStorage.setItem('sbAdminUnlocked', 'true');
-    showAdminPanel();
-  } else {
-    document.getElementById('adminError').textContent = 'Incorrect password';
-  }
+  showAdminPanel();
 }
 
 function showAdminPanel() {
-  document.getElementById('adminGate').style.display = 'none';
   document.getElementById('adminPanel').classList.add('show');
   buildAdminForm();
   updateAdminStats();
+  renderAdminPlayers();
+  renderShareSection();
+}
+
+function renderShareSection() {
+  const origin = window.location.origin;
+  const basePath = window.location.pathname.replace(/\/[^/]*$/, '/');
+  const picksUrl = origin + basePath + 'index.html?party=' + partyId;
+  const leaderboardUrl = origin + basePath + 'leaderboard.html?party=' + partyId;
+
+  document.getElementById('sharePicksUrl').value = picksUrl;
+  document.getElementById('shareLeaderboardUrl').value = leaderboardUrl;
+
+  // Generate QR code for picks URL
+  const qrContainer = document.getElementById('qrCode');
+  qrContainer.innerHTML = '';
+  new QRCode(qrContainer, {
+    text: picksUrl,
+    width: 160,
+    height: 160,
+    colorDark: '#002244',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // Copy button handlers
+  document.querySelectorAll('.btn-copy').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const input = document.getElementById(this.dataset.target);
+      navigator.clipboard.writeText(input.value).then(() => {
+        const original = this.textContent;
+        this.textContent = 'Copied!';
+        this.classList.add('copied');
+        setTimeout(() => {
+          this.textContent = original;
+          this.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  });
+}
+
+function renderAdminPlayers() {
+  const container = document.getElementById('adminPlayersList');
+  const sorted = [...allPicks].sort((a, b) =>
+    a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  );
+
+  if (sorted.length === 0) {
+    container.innerHTML = '<div style="color:var(--silver); font-size:0.9rem; padding:12px 0;">No players have submitted picks yet.</div>';
+    return;
+  }
+
+  container.innerHTML = sorted.map(pick => `
+    <div class="admin-player-row">
+      <span class="player-name">${escapeHtml(pick.name)}</span>
+      <button class="btn-delete-pick" data-pick-id="${pick.id}" data-pick-name="${escapeHtml(pick.name)}">Remove</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.btn-delete-pick').forEach(btn => {
+    btn.addEventListener('click', async function () {
+      const pickId = this.dataset.pickId;
+      const pickName = this.dataset.pickName;
+      if (!window.confirm('Remove all picks for "' + pickName + '"? This cannot be undone.')) return;
+
+      this.disabled = true;
+      this.textContent = 'Removing...';
+
+      try {
+        const { error } = await supabaseClient
+          .from('party_picks')
+          .delete()
+          .eq('id', pickId);
+
+        if (error) throw error;
+
+        // Refresh data
+        await fetchData();
+        renderAdminPlayers();
+        updateAdminStats();
+      } catch (err) {
+        console.error('Delete error:', err);
+        alert('Error removing player: ' + (err.message || 'Unknown error'));
+        this.disabled = false;
+        this.textContent = 'Remove';
+      }
+    });
+  });
 }
 
 let savedAdminState = {};
@@ -2064,10 +2605,7 @@ function escapeJs(str) {
 // ============================================================
 // INIT
 // ============================================================
-if (partyId) {
-  fetchData();
-  startRefreshTimer();
-}
+// Data fetch and refresh timer are started inside initPartyGate() above
 </script>
 
 </body>

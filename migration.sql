@@ -3,15 +3,16 @@
 
 -- Parties table
 CREATE TABLE IF NOT EXISTS parties (
-  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
+  creator_token UUID DEFAULT gen_random_uuid() NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Table for guest picks
 CREATE TABLE IF NOT EXISTS party_picks (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  party_id BIGINT NOT NULL REFERENCES parties(id),
+  party_id UUID NOT NULL REFERENCES parties(id),
   name TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   q1  TEXT, -- Coin Toss
@@ -35,7 +36,7 @@ CREATE TABLE IF NOT EXISTS party_picks (
 
 -- Table for correct answers (one row per party, updated by host)
 CREATE TABLE IF NOT EXISTS party_answers (
-  party_id BIGINT PRIMARY KEY REFERENCES parties(id),
+  party_id UUID PRIMARY KEY REFERENCES parties(id),
   q1  TEXT,
   q2  TEXT,
   q3  TEXT,
@@ -59,9 +60,12 @@ ALTER TABLE parties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE party_picks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE party_answers ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for parties
-CREATE POLICY "Anyone can insert parties"
-  ON parties FOR INSERT TO anon WITH CHECK (true);
+-- Parties: restrict SELECT to safe columns only (no creator_token)
+REVOKE SELECT ON parties FROM anon;
+GRANT SELECT (id, name, created_at) ON parties TO anon;
+
+-- Parties: no direct INSERT from anon (use create_party RPC instead)
+REVOKE INSERT ON parties FROM anon;
 
 CREATE POLICY "Anyone can read parties"
   ON parties FOR SELECT TO anon USING (true);
@@ -74,6 +78,11 @@ CREATE POLICY "Anyone can insert picks"
 
 CREATE POLICY "Anyone can read picks"
   ON party_picks FOR SELECT
+  TO anon
+  USING (true);
+
+CREATE POLICY "Anyone can delete picks"
+  ON party_picks FOR DELETE
   TO anon
   USING (true);
 
@@ -93,3 +102,35 @@ CREATE POLICY "Anyone can update answers"
   TO anon
   USING (true)
   WITH CHECK (true);
+
+-- Verify creator token RPC function
+CREATE OR REPLACE FUNCTION verify_creator_token(p_party_id UUID, p_token UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM parties
+    WHERE id = p_party_id AND creator_token = p_token
+  );
+END;
+$$;
+
+-- Create party RPC function (returns token only to the creator)
+CREATE OR REPLACE FUNCTION create_party(p_name TEXT)
+RETURNS TABLE(id UUID, name TEXT, creator_token UUID)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_party RECORD;
+BEGIN
+  INSERT INTO parties (name) VALUES (p_name)
+  RETURNING parties.id, parties.name, parties.creator_token INTO v_party;
+
+  INSERT INTO party_answers (party_id) VALUES (v_party.id);
+
+  RETURN QUERY SELECT v_party.id, v_party.name, v_party.creator_token;
+END;
+$$;
