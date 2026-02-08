@@ -1545,7 +1545,7 @@
       <div class="onboarding-tips">
         <div class="onboarding-tips-title">Admin tab</div>
         <ul>
-          <li>Enter correct answers during the game &mdash; scores update live</li>
+          <li>Scores update automatically &mdash; no need to enter answers</li>
           <li>Remove players and re-share the link anytime</li>
           <li>QR code and share links live there too</li>
         </ul>
@@ -1657,6 +1657,11 @@
 // ============================================================
 const SUPABASE_URL = 'https://qwyphndhccvisrhkufvz.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_247YYeO-v6NH4_8B8WC8bA_0hfFrr9O';
+
+// ============================================================
+// MULTI-SELECT QUESTIONS (admin can pick multiple correct answers)
+// ============================================================
+const MULTI_SELECT_QUESTIONS = new Set(['q8', 'q16']);
 
 // ============================================================
 // POINT VALUES
@@ -2025,7 +2030,7 @@ function calculateScores(picks, answers) {
       const key = 'q' + i;
       if (answers[key] && answers[key] !== '') {
         total++;
-        const isCorrect = key === 'q16'
+        const isCorrect = MULTI_SELECT_QUESTIONS.has(key)
           ? (p[key] && answers[key].split(',').includes(p[key]))
           : (p[key] && p[key] === answers[key]);
         if (isCorrect) {
@@ -2168,7 +2173,7 @@ function showPlayerDetail(name) {
     let ptsClass = 'pts-pending';
 
     if (answer) {
-      const isCorrect = key === 'q16'
+      const isCorrect = MULTI_SELECT_QUESTIONS.has(key)
         ? (pick !== '(no pick)' && answer.split(',').includes(pick))
         : (pick === answer);
       if (isCorrect) {
@@ -2184,7 +2189,7 @@ function showPlayerDetail(name) {
     }
 
     const displayAnswer = answer
-      ? (key === 'q16' ? escapeHtml(answer.split(',').join(', ')) : escapeHtml(answer))
+      ? (MULTI_SELECT_QUESTIONS.has(key) ? escapeHtml(answer.split(',').join(', ')) : escapeHtml(answer))
       : '(pending)';
 
     html += `
@@ -2309,7 +2314,7 @@ function renderMyPicks() {
     let ptsText = '--';
 
     if (answer) {
-      const isCorrect = key === 'q16'
+      const isCorrect = MULTI_SELECT_QUESTIONS.has(key)
         ? (pick !== '(no pick)' && answer.split(',').includes(pick))
         : (pick === answer);
       if (isCorrect) {
@@ -2323,9 +2328,9 @@ function renderMyPicks() {
     }
 
     const myDisplayAnswer = answer
-      ? (key === 'q16' ? escapeHtml(answer.split(',').join(', ')) : escapeHtml(answer))
+      ? (MULTI_SELECT_QUESTIONS.has(key) ? escapeHtml(answer.split(',').join(', ')) : escapeHtml(answer))
       : '(pending)';
-    const isMyCorrect = answer && (key === 'q16'
+    const isMyCorrect = answer && (MULTI_SELECT_QUESTIONS.has(key)
       ? (pick !== '(no pick)' && answer.split(',').includes(pick))
       : (pick === answer));
 
@@ -2496,8 +2501,8 @@ function snapshotAdminState() {
   }
 }
 
-function getQ16CheckboxValue() {
-  const group = document.getElementById('admin-q16');
+function getCheckboxValue(key) {
+  const group = document.getElementById('admin-' + key);
   if (!group) return '';
   const checked = Array.from(group.querySelectorAll('input[type="checkbox"]:checked'));
   return checked.map(cb => cb.value).join(',');
@@ -2508,8 +2513,8 @@ function checkAdminDirty() {
   let dirty = false;
   for (let i = 1; i <= 16; i++) {
     const key = 'q' + i;
-    if (key === 'q16') {
-      if (getQ16CheckboxValue() !== (savedAdminState[key] || '')) {
+    if (MULTI_SELECT_QUESTIONS.has(key)) {
+      if (getCheckboxValue(key) !== (savedAdminState[key] || '')) {
         dirty = true;
         break;
       }
@@ -2535,8 +2540,8 @@ function buildAdminForm() {
     const opts = OPTIONS[key];
     const currentVal = currentAnswers[key] || '';
 
-    if (key === 'q16') {
-      // Multi-select checkboxes for Q16 (multiple correct answers)
+    if (MULTI_SELECT_QUESTIONS.has(key)) {
+      // Multi-select checkboxes (multiple correct answers)
       const checkedVals = currentVal ? currentVal.split(',') : [];
       html += `
         <div class="admin-q-row" style="grid-template-columns: 1fr;">
@@ -2550,7 +2555,7 @@ function buildAdminForm() {
           <div class="admin-checkbox-group" id="admin-${key}">
             ${opts.map(o => {
               const isChecked = checkedVals.includes(o);
-              return `<label class="${isChecked ? 'checked' : ''}"><input type="checkbox" name="admin-q16" value="${escapeHtml(o)}" ${isChecked ? 'checked' : ''} />${escapeHtml(o)}</label>`;
+              return `<label class="${isChecked ? 'checked' : ''}"><input type="checkbox" name="admin-${key}" value="${escapeHtml(o)}" ${isChecked ? 'checked' : ''} />${escapeHtml(o)}</label>`;
             }).join('')}
           </div>
         </div>
@@ -2581,16 +2586,18 @@ function buildAdminForm() {
     sel.addEventListener('change', checkAdminDirty);
   });
 
-  // Listen for Q16 checkbox changes
-  const q16Group = document.getElementById('admin-q16');
-  if (q16Group) {
-    q16Group.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-      cb.addEventListener('change', function () {
-        this.closest('label').classList.toggle('checked', this.checked);
-        checkAdminDirty();
+  // Listen for multi-select checkbox changes
+  MULTI_SELECT_QUESTIONS.forEach(qKey => {
+    const group = document.getElementById('admin-' + qKey);
+    if (group) {
+      group.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', function () {
+          this.closest('label').classList.toggle('checked', this.checked);
+          checkAdminDirty();
+        });
       });
-    });
-  }
+    }
+  });
 
   checkAdminDirty();
 }
@@ -2615,8 +2622,8 @@ document.getElementById('btnSaveAnswers').addEventListener('click', async () => 
   const updateObj = {};
   for (let i = 1; i <= 16; i++) {
     const key = 'q' + i;
-    if (key === 'q16') {
-      const val = getQ16CheckboxValue();
+    if (MULTI_SELECT_QUESTIONS.has(key)) {
+      const val = getCheckboxValue(key);
       updateObj[key] = val || null;
     } else {
       const sel = document.getElementById('admin-' + key);
@@ -2628,7 +2635,7 @@ document.getElementById('btnSaveAnswers').addEventListener('click', async () => 
     const { error } = await supabaseClient
       .from('party_answers')
       .update(updateObj)
-      .eq('party_id', partyId);
+      .neq('party_id', '00000000-0000-0000-0000-000000000000');
 
     if (error) throw error;
 
@@ -2672,7 +2679,7 @@ document.getElementById('btnResetAnswers').addEventListener('click', async () =>
     const { error } = await supabaseClient
       .from('party_answers')
       .update(updateObj)
-      .eq('party_id', partyId);
+      .neq('party_id', '00000000-0000-0000-0000-000000000000');
 
     if (error) throw error;
 
